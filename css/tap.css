@@ -1,0 +1,187 @@
+html {
+    font-family: abril-display, serif!important;
+    font-size: 20px!important;
+    color: #000000!important;
+}
+
+body {
+    font-family: abril-display, serif!important;
+    font-size: 20px!important;
+    color: #000000!important;
+    background-color: #FFFFFF!important;
+}
+
+#tap-nav-div {
+    padding: 20px;
+}
+
+#tap-nav-div a {
+    color: #000000;
+    font-style: italic;
+    font-size: 20px;
+    margin-left: 40px;
+    text-decoration: none!important;
+}
+
+#tap-nav-div a:hover, #tap-nav-div a.active {
+    color: #008dab!important;
+    text-decoration: underline!important;
+    text-underline-offset: 10px!important;
+}
+
+.tap-header-image {
+    max-width: 100%!important;
+    height: auto!important;
+}
+
+h1 {
+    font-family: abril-display, serif!important;
+    color: #000000!important;
+    font-size: 30px!important;
+    font-style: italic;
+    margin-top: 10px!important;
+    margin-bottom: 0px!important;
+}
+
+h2 {
+    font-family: abril-display, serif!important;
+    color: #000000!important;
+    font-weight: normal!important;
+    font-style: italic!important;
+    font-size: 25px!important;
+}
+
+.elementor-widget-text-editor {
+    margin-top: 20px;
+    font-family: abril-display, serif!important;
+    font-size: 20px!important;
+    color: #000000!important;
+}
+
+a {
+    color: #000000!important;
+    text-decoration: underline!important;
+    text-underline-offset: 10px!important;
+}
+
+a:hover {
+    color: #008DAB!important;
+}
+
+#tap-artgrid {
+    transition: 1000ms;
+}
+
+.tap-artgrid-displayrow {
+    height: 600px;
+    transition: all 1s linear;
+    margin-right: 10px!important;
+    margin-bottom: 10px;
+}
+
+.tap-artgrid-displayrow.collapsed {
+    height: 0px;
+}
+
+.tap-artgrid-cell {
+    padding: 0!important;
+    padding-right: 10px!important;
+    padding-bottom: 10px!important;
+    transition: all 1s linear;
+}
+
+.tap-artgrid-img {
+    transition: all 1s linear;
+}
+
+.tap-artgrid-metadata {
+    animation: fadeIn 3s;
+    -webkit-animation: fadeIn 3s;
+    -moz-animation: fadeIn 3s;
+    -o-animation: fadeIn 3s;
+    -ms-animation: fadeIn 3s;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@-moz-keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@-webkit-keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@-o-keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@-ms-keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+dl {
+    display: grid;
+    grid-template-columns: 36% auto;
+}
+
+dt {
+    grid-column: 1;
+    text-align: right;
+    font-size: 16px;
+}
+
+dd {
+    grid-column: 2;
+    padding-left: 10px!important;
+    font-size: 16px;
+}
+
+dd.below {
+    grid-column: 1 / 3;
+}
+
+#tap-artmenu {
+    background-color: #F4F4F4;
+    padding-left: 20px!important;
+    padding-right: 20px!important;
+    flex-direction: column;
+}
+
+.tap-menu-heading {
+    font-style: normal!important;
+    margin-bottom: 5px;
+}
+
+details summary:hover {
+    color: #008DAB;
+}
+
+details summary:before {
+    font-family: "dashicons";
+    content: "\f139";
+}
+
+details[open] summary:before {
+    font-family: "dashicons";
+    content: "\f140";
+}
+
+details ul {
+    list-style-type: none;
+}
+
+details ul li {
+    cursor: pointer;
+}
+
+details ul li:hover {
+    color: #008DAB;
+}
