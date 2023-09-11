@@ -126,7 +126,7 @@ class HeaderImage {
         this.element = element
         this.headers = {
             '/': {
-                src: "/wp-content/plugins/tap/img/home-collage.png",
+                src: `${this.clo.plugin_url}/img/home-collage.png`,
                 alt: "The Texas Art Project"
             }
         }

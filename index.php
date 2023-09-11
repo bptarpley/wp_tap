@@ -61,9 +61,9 @@
 
 	function tap_corpora_inject_footer()
 	{
-	    $corpora_host = getenv('CLO_CORPORA_HOST');
-	    $corpus_id = getenv('CLO_CORPUS_ID');
-	    $corpora_token = getenv('CLO_TOKEN');
+	    $corpora_host = getenv('TAP_CORPORA_HOST');
+	    $corpus_id = getenv('TAP_CORPUS_ID');
+	    $corpora_token = getenv('TAP_TOKEN');
 
 	    if (!$corpora_token) {
 	        $corpora_token = '';
