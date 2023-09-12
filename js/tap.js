@@ -94,9 +94,9 @@ class SiteHeader {
 
         const top_navs = [
             {path: '/', name: "Home"},
-            {path: '/about', name: "About Us"},
-            {path: '/artists', name: "Featured Artists"},
-            {path: '/contact', name: "Contact Us"}
+            {path: '/about/', name: "About Us"},
+            {path: '/artists/', name: "Featured Artists"},
+            {path: '/contact/', name: "Contact Us"}
         ]
         let nav_links = top_navs.map(nav => `<a href="${nav.path}"${nav.path === this.clo.path ? ' class="active"' : ''}>${nav.name}</a>`)
 
@@ -128,6 +128,10 @@ class HeaderImage {
             '/': {
                 src: `${this.clo.plugin_url}/img/home-collage.png`,
                 alt: "The Texas Art Project"
+            },
+            '/about/': {
+                src: `${this.clo.plugin_url}/img/about-heading.png`,
+                alt: "About the Texas Art Project"
             }
         }
 
