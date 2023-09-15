@@ -270,7 +270,7 @@ class ArtGrid {
                     artworks.records.forEach((artwork, index) => {
                         let art_region = null
                         if (artwork.hasOwnProperty('featured_region_x') && artwork.featured_region_x) {
-                            art_region = `${artwork.featured_region_x},${artwork.featured_region_y},${artwork.featured_region_size},${artwork.featured_region_size}`;
+                            art_region = `${artwork.featured_region_x},${artwork.featured_region_y},${artwork.featured_region_width},${artwork.featured_region_width}`;
                         }
 
                         sender.element.append(`
@@ -282,7 +282,7 @@ class ArtGrid {
                                 data-artwork-id="${artwork.id}"
                                 data-iiif-identifier="${artwork.iiif_uri}"
                                 ${(index + 1 === artworks.records.length && artworks.meta.has_next_page) ? `data-next-page="${artworks.meta.page + 1}"` : ''}
-                                ${art_region ? `data-art-region="${art_region}"` : ''} 
+                                ${art_region ? `data-region="${art_region}"` : ''} 
                               />
                             </div>
                         `)
