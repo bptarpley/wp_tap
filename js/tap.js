@@ -12,13 +12,15 @@ class TexasArtProject {
         this.artmenu = null
 
         // SITE HEADER
-        let tap_site_header = jQuery('#tap-header-div>.elementor-container>.elementor-column>.elementor-widget-wrap')
+        //let tap_site_header = jQuery('#tap-header-div>.elementor-container>.elementor-column>.elementor-widget-wrap')
+        let tap_site_header = jQuery('#tap-header-div')
         if (tap_site_header.length) {
             this.site_header = new SiteHeader(this, tap_site_header)
         }
 
         // HEADER IMAGE
-        let tap_header_image = jQuery('#tap-header-image>.elementor-container>.elementor-column>.elementor-widget-wrap')
+        //let tap_header_image = jQuery('#tap-header-image>.elementor-container>.elementor-column>.elementor-widget-wrap')
+        let tap_header_image = jQuery('#tap-header-image')
         if (tap_header_image.length) {
             this.header_image = new HeaderImage(this, tap_header_image)
         }
