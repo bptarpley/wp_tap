@@ -11,6 +11,10 @@ body {
     background-color: #FFFFFF!important;
 }
 
+#tap-header-div, #tap-header-image {
+    max-width: 1280px;
+}
+
 #tap-nav-div {
     padding: 20px;
 }
