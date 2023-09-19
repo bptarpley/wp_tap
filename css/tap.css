@@ -199,7 +199,7 @@ details ul li:hover {
     color: #008DAB;
 }
 
-#tap-artmap-div {
+#tap-artmap {
     background-color: #e3dfdb;
 }
 
@@ -217,6 +217,6 @@ details ul li:hover {
     white-space: nowrap;
 }
 
-.tap-artmap-marker-circle:hover {
+.tap-artmap-marker:hover .tap-artmap-marker-circle, .tap-artmap-cluster:hover .tap-artmap-marker-circle {
     stroke: black;
 }

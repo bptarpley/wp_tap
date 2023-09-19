@@ -99,6 +99,38 @@ class TexasArtProject {
     count_instances(a_string, instance) {
         return a_string.split(instance).length
     }
+
+    inject_iiif_info(img, callback) {
+        jQuery.getJSON(`${img.data('iiif-identifier')}/info.json`, {}, function(info) {
+            img.data('fullwidth', info.width)
+            img.data('fullheight', info.height)
+            callback()
+        })
+    }
+
+    render_image(img, size, region_only=true) {
+        let iiif_src
+        let width = size
+        let height = size
+
+        if (region_only) {
+            iiif_src = `${img.data('iiif-identifier')}/${img.data('region')}/${size},${size}/0/default.png`
+        } else {
+            if (width > img.data('fullwidth')) width = img.data('fullwidth')
+            iiif_src = `${img.data('iiif-identifier')}/full/${width},/0/default.png`
+            let ratio = width / img.data('fullwidth')
+            height = parseInt(ratio * img.data('fullheight'))
+            img.css('filter', 'brightness(2)')
+            img.on('load', function() {
+                img.css('filter', 'brightness(1.1)')
+            })
+        }
+
+        img.attr('src', iiif_src)
+        img.css('width', `${width}px`)
+        img.css('height', `${height}px`)
+        img.data('loaded', true)
+    }
 }
 
 class SiteHeader {
@@ -184,11 +216,11 @@ class ArtGrid {
                         let img_width = parseInt(img_rect.width)
 
                         if (img.data('region')) {
-                            sender.render_image(img, img_width)
+                            sender.clo.render_image(img, img_width)
                         } else {
-                            sender.inject_iiif_info(img, function() {
+                            sender.clo.inject_iiif_info(img, function() {
                                 img.data('region', `${parseInt(img.data('fullwidth') / 2) - 100},${parseInt(img.data('fullheight') / 2) - 100},200,200`)
-                                sender.render_image(img, img_width)
+                                sender.clo.render_image(img, img_width)
                             })
                         }
 
@@ -213,7 +245,7 @@ class ArtGrid {
             if (featured_img.length) {
                 featured_cell.removeClass('col-md-12')
                 featured_cell.addClass('col-md-4')
-                sender.render_image(featured_img, parseInt(cell.width()))
+                sender.clo.render_image(featured_img, parseInt(cell.width()))
                 jQuery('.tap-artgrid-metadata').remove()
                 featured_cell.removeClass('featured')
                 featured_img.removeClass('featured')
@@ -223,10 +255,10 @@ class ArtGrid {
             let img = jQuery(`#tap-artgrid-img-${artwork_id}`)
             let grid_width = parseInt(sender.element.width())
             if (img.data('fullwidth'))
-                sender.render_image(img, grid_width - 10, false)
+                sender.clo.render_image(img, grid_width - 10, false)
             else
-                sender.inject_iiif_info(img, function() {
-                    sender.render_image(img, grid_width - 10, false)
+                sender.clo.inject_iiif_info(img, function() {
+                    sender.clo.render_image(img, grid_width - 10, false)
                 })
 
             let meta = sender.metadata[artwork_id]
@@ -317,38 +349,6 @@ class ArtGrid {
                 }
             }
         )
-    }
-
-    inject_iiif_info(img, callback) {
-        jQuery.getJSON(`${img.data('iiif-identifier')}/info.json`, {}, function(info) {
-            img.data('fullwidth', info.width)
-            img.data('fullheight', info.height)
-            callback()
-        })
-    }
-
-    render_image(img, size, region_only=true) {
-        let iiif_src
-        let width = size
-        let height = size
-
-        if (region_only) {
-            iiif_src = `${img.data('iiif-identifier')}/${img.data('region')}/${size},${size}/0/default.png`
-        } else {
-            if (width > img.data('fullwidth')) width = img.data('fullwidth')
-            iiif_src = `${img.data('iiif-identifier')}/full/${width},/0/default.png`
-            let ratio = width / img.data('fullwidth')
-            height = parseInt(ratio * img.data('fullheight'))
-            img.css('filter', 'brightness(2)')
-            img.on('load', function() {
-                img.css('filter', 'brightness(1.1)')
-            })
-        }
-
-        img.attr('src', iiif_src)
-        img.css('width', `${width}px`)
-        img.css('height', `${height}px`)
-        img.data('loaded', true)
     }
 }
 
@@ -640,6 +640,9 @@ class ArtMap {
         this.us_map = null
 
         this.current_tab = 'texas'
+        this.current_location = null
+
+        this.popup = null
 
         this.texas_tab.html(`
             <div class="row">
@@ -726,6 +729,11 @@ class ArtMap {
 
                     sender.artmenu = new ArtMenu(sender.clo, jQuery('#tap-artmenu'), sender)
                     sender.load_images()
+
+                    sender.popup = L.popup({maxHeight: 300})
+                    sender.texas_map.on('popupclose', e => {
+                        sender.texas_map.flyTo(sender.locations[sender.current_location].coordinates)
+                    })
                 })
         }, 1000)
     }
@@ -740,6 +748,8 @@ class ArtMap {
             function(artworks) {
                 if (artworks.records) {
                     artworks.records.forEach(artwork => {
+                        if (!(artwork.id in sender.metadata)) sender.metadata[artwork.id] = Object.assign({}, artwork)
+
                         if (artwork.location && !(artwork.location.id in sender.locations)) {
                             sender.locations[artwork.location.id] = Object.assign({ marker: null }, artwork.location)
                         }
@@ -778,8 +788,9 @@ class ArtMap {
                     Object.keys(sender.locations).forEach(location_id => {
                         let loc = sender.locations[location_id]
                         if (!loc.marker && loc.coordinates) {
+                            loc.coordinates = [loc.coordinates[1], loc.coordinates[0]]
                             loc.marker = new L.Marker(
-                                [loc.coordinates[1], loc.coordinates[0]],
+                                loc.coordinates,
                                 {
                                     icon: new L.DivIcon({
                                         className: 'tap-artmap-marker',
@@ -802,11 +813,83 @@ class ArtMap {
                                     })
                                 }
                             )
+                            loc.marker.on('click', function(e) {
+                                sender.display_metadata(location_id)
+                            })
                             sender.texas_cluster.addLayer(loc.marker)
                             //loc.marker.addTo(sender.texas_map)
                         }
                     })
                     sender.texas_map.addLayer(sender.texas_cluster)
+                }
+            }
+        )
+    }
+
+    display_metadata(location_id) {
+        let sender = this
+        sender.current_location = location_id
+        this.clo.make_request(
+            `/api/corpus/${sender.clo.corpus_id}/ArtWork/`,
+            'GET',
+            {'f_location.id': location_id, 'page-size': 100},
+            function(artworks) {
+                let meta = `<div class="accordion" id="tap-artmap-metadata-popup">`
+                if (artworks.records) {
+                    artworks.records.forEach((artwork, i) => {
+                        let tags = []
+                        artwork.tags.forEach(tag => {
+                            let [key, value] = tag.label.split(': ')
+                            tags.push(`<dt>${key}:</dt><dd>${value}</dd>`)
+                        })
+
+                        meta += `
+                            <div class="card">
+                              <div class="card-header" id="heading${i}">
+                                <h2 class="mb-0">
+                                  <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse${i}" aria-expanded="${i === 0 ? 'true': 'false'}" aria-controls="collapse${i}">
+                                    ${i + 1}. ${artwork.title}
+                                  </button>
+                                </h2>
+                              </div>
+                            
+                              <div id="collapse${i}" class="collapse${i === 0 ? ' show' : ''}" aria-labelledby="heading${i}" data-parent="#tap-artmap-metadata-popup">
+                                <div class="card-body">
+                                  <img
+                                    id="tap-artgrid-img-${artwork.id}"
+                                    src="${sender.clo.plugin_url + '/img/image-loading.svg'}"
+                                    class="tap-artgrid-img img-responsive mb-2"
+                                    data-artwork-id="${artwork.id}"
+                                    data-iiif-identifier="${artwork.iiif_uri}" 
+                                  />
+                                  <dl>
+                                    <dt>Year:</dt><dd>${artwork.year}</dd>
+                                    ${artwork.location ? `<dt>Origin:</dt><dd>${artwork.location.label}</dd>` : ''}
+                                    ${tags.join('\n')}
+                                    <dt>Surface:</dt><dd>${artwork.surface}</dd>
+                                    <dt>Medium:</dt><dd>${artwork.medium}</dd>
+                                    <dt>Size:</dt><dd>${artwork.size_inches}</dd>
+                                    ${artwork.collection ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
+                                  </dl>
+                                </div>
+                              </div>
+                            </div>
+                        `
+                    })
+
+                    meta += `</div>`
+                    sender.popup
+                        .setLatLng(sender.locations[location_id].coordinates)
+                        .setContent(meta)
+                        .openOn(sender.texas_map)
+
+                    let popup_metadata_pane = jQuery(`#tap-artmap-metadata-popup`)
+                    artworks.records.forEach(artwork => {
+                        let img = jQuery(`#tap-artgrid-img-${artwork.id}`)
+                        sender.clo.inject_iiif_info(img, function() {
+                            sender.clo.render_image(img, popup_metadata_pane.width() - 20, false)
+                        })
+                    })
                 }
             }
         )
