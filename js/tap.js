@@ -845,12 +845,10 @@ class ArtMap {
 
                         meta += `
                             <div class="card">
-                              <div class="card-header" id="heading${i}">
-                                <h2 class="mb-0">
-                                  <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse${i}" aria-expanded="${i === 0 ? 'true': 'false'}" aria-controls="collapse${i}">
+                              <div class="tap-card-header" id="heading${i}">
+                                  <button class="btn btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse${i}" aria-expanded="${i === 0 ? 'true': 'false'}" aria-controls="collapse${i}">
                                     ${i + 1}. ${artwork.title}
                                   </button>
-                                </h2>
                               </div>
                             
                               <div id="collapse${i}" class="collapse${i === 0 ? ' show' : ''}" aria-labelledby="heading${i}" data-parent="#tap-artmap-metadata-popup">

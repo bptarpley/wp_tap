@@ -203,7 +203,7 @@ details ul li:hover {
     background-color: #e3dfdb;
 }
 
-.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+.leaflet-control-zoom-in, .leaflet-control-zoom-out, .leaflet-popup-close-button {
     text-decoration: none!important;
 }
 
@@ -219,4 +219,10 @@ details ul li:hover {
 
 .tap-artmap-marker:hover .tap-artmap-marker-circle, .tap-artmap-cluster:hover .tap-artmap-marker-circle {
     stroke: black;
+}
+
+.tap-card-header .btn {
+    font-size: inherit;
+    background-color: #d5b09d;
+    border-radius: 0;
 }
