@@ -38,7 +38,10 @@
 		wp_enqueue_script('tap-tippy', plugin_dir_url(__FILE__).'js/tippy-bundle.umd.min.js', array('tap-popper'));
 		wp_enqueue_script('tap-autocomplete', plugin_dir_url(__FILE__).'js/autoComplete.min.js');
 		wp_enqueue_script('tap-openseadragon', plugin_dir_url(__FILE__).'js/openseadragon/openseadragon.min.js');
+		wp_enqueue_script('tap-rangeslider-marks', plugin_dir_url(__FILE__).'js/tcrs-marks.min.js');
+		wp_enqueue_script('tap-rangeslider', plugin_dir_url(__FILE__).'js/toolcool-range-slider.min.js');
 		wp_enqueue_script('tap-leaflet', plugin_dir_url(__FILE__).'js/leaflet.js');
+		wp_enqueue_script('tap-leaflet-cluster', plugin_dir_url(__FILE__).'js/leaflet.markercluster.js');
 		wp_enqueue_script(
 		    'tap-script',
 		    plugin_dir_url( __FILE__ ).'js/tap.js',
@@ -49,13 +52,18 @@
 		        'tap-tippy',
 		        'tap-autocomplete',
 		        'tap-openseadragon',
-		        'tap-leaflet'
+		        'tap-rangeslider-marks',
+		        'tap-rangeslider',
+		        'tap-leaflet',
+		        'tap-leaflet-cluster'
             )
         ); //your javascript library
 
 		// Register CSS
 		wp_enqueue_style('jquery-ui-css', plugin_dir_url( __FILE__ ).'css/jquery-ui.min.css');
 		wp_enqueue_style('tap-autocomplete-css', plugin_dir_url( __FILE__ ).'css/autoComplete.min.css');
+		wp_enqueue_style('tap-leaflet-css', plugin_dir_url( __FILE__ ).'css/leaflet/leaflet.css');
+		wp_enqueue_style('tap-leaflet-cluster-css', plugin_dir_url( __FILE__ ).'css/MarkerCluster.css');
 		wp_enqueue_style('tap-css', plugin_dir_url( __FILE__ ).'css/tap.css');
 	}
 

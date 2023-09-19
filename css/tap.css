@@ -11,10 +11,6 @@ body {
     background-color: #FFFFFF!important;
 }
 
-#tap-header-div, #tap-header-image {
-    max-width: 1280px;
-}
-
 #tap-nav-div {
     padding: 20px;
 }
@@ -74,6 +70,9 @@ a:hover {
 
 #tap-artgrid {
     transition: 1000ms;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
 }
 
 .tap-artgrid-displayrow {
@@ -96,6 +95,11 @@ a:hover {
 
 .tap-artgrid-img {
     transition: all 1s linear;
+    cursor: pointer;
+}
+
+.tap-artgrid-img:hover {
+    filter: brightness(1.5);
 }
 
 .tap-artgrid-metadata {
@@ -157,6 +161,11 @@ dd.below {
     padding-left: 20px!important;
     padding-right: 20px!important;
     flex-direction: column;
+    position: sticky;
+    top: 0;
+    overflow-y: scroll;
+    max-height: 100vh;
+    min-height: 100vh;
 }
 
 .tap-menu-heading {
@@ -188,4 +197,26 @@ details ul li {
 
 details ul li:hover {
     color: #008DAB;
+}
+
+#tap-artmap-div {
+    background-color: #e3dfdb;
+}
+
+.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+    text-decoration: none!important;
+}
+
+.leaflet-control-attribution.leaflet-control {
+    font-size: 12px;
+    text-align: right;
+    width: 100%;
+}
+
+.tap-artmap-marker, .tap-artmap-marker-label {
+    white-space: nowrap;
+}
+
+.tap-artmap-marker-circle:hover {
+    stroke: black;
 }
