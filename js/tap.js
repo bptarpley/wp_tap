@@ -763,7 +763,7 @@ class ArtMap {
             }
         `)
         this.artslider_timer = null
-        this.artslider.addEventListener('onMouseUp', (evt) => {
+        this.artslider.addEventListener('change', (evt) => {
             clearTimeout(sender.artslider_timer)
             sender.artslider_timer = setTimeout(() => {
                 sender.criteria['r_year'] = `${sender.artslider.value1}to${sender.artslider.value2}`
