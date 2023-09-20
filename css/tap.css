@@ -170,6 +170,17 @@ dd.below {
     -ms-overflow-style: none;  /* Internet Explorer 10+ */
 }
 
+@media (max-width: 1250px) {
+    #tap-artmenu {
+        position: inherit;
+        top: unset;
+        overflow-y: unset;
+        max-height: unset;
+        min-height: unset;
+        padding-bottom: 20px;
+    }
+}
+
 #tap-artmenu::-webkit-scrollbar { /* WebKit */
     width: 0;
     height: 0;
@@ -203,16 +214,27 @@ dd.below {
     vertical-align: middle;
 }
 
-details summary:hover {
+details > summary {
+    list-style: none;
+}
+details > summary::-webkit-details-marker {
+    display: none;
+}
+
+details > summary:hover {
     color: #008DAB;
 }
 
-details summary:before {
+summary > h2 {
+    display: inline;
+}
+
+details > summary:before {
     font-family: "dashicons";
     content: "\f139";
 }
 
-details[open] summary:before {
+details[open] > summary:before {
     font-family: "dashicons";
     content: "\f140";
 }

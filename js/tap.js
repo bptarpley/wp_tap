@@ -379,7 +379,9 @@ class ArtMenu {
                 <input id="tap-artmenu-search-box" type="text" class="form-control form-control-sm" placeholder="Type here" />
             </div>
             
+            ${window.innerWidth <= 767 ? `<details class="tap-artmenu-list"><summary>` : ''}
             <h2 class="tap-menu-heading mt-2">Filter</h2>
+            ${window.innerWidth <= 767 ? `</summary>` : ''}
             
             ${show_year ? `
             <details class="tap-artmenu-list">
@@ -439,6 +441,7 @@ class ArtMenu {
               <summary>Subject</summary>
               <ul id="tap-artmenu-subject-list"></ul>
             </details>
+            ${window.innerWidth <= 767 ? `</details>` : ''}
         `)
 
         // perform aggregations where ArtWork field values correspond to list items
@@ -731,8 +734,8 @@ class ArtMap {
                     value2="1990"
                     step="10"
                     marks="true"
-                    marks-count="12"
-                    marks-values-count="12"
+                    marks-count="${window.innerWidth <= 767 ? '6' : '12'}"
+                    marks-values-count="${window.innerWidth <= 767 ? '6' : '12'}"
                     marks-values-color="#000000">
                 </tc-range-slider>
                 <div id="tap-artmap-attribution-div" style="margin-top: 65px;"></div>
