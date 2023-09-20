@@ -166,11 +166,41 @@ dd.below {
     overflow-y: scroll;
     max-height: 100vh;
     min-height: 100vh;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+
+#tap-artmenu::-webkit-scrollbar { /* WebKit */
+    width: 0;
+    height: 0;
 }
 
 .tap-menu-heading {
     font-style: normal!important;
     margin-bottom: 5px;
+}
+
+.tap-artmenu-active-filter {
+    display: block;
+    background-color: #008DAB;
+    color: white;
+    font-weight: normal!important;
+    padding: 5px!important;
+}
+
+.tap-artmenu-active-filter-label {
+    max-width: 250px;
+    text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+.tap-artmenu-active-filter-delete-button {
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 details summary:hover {

@@ -104,6 +104,8 @@ class TexasArtProject {
         jQuery.getJSON(`${img.data('iiif-identifier')}/info.json`, {}, function(info) {
             img.data('fullwidth', info.width)
             img.data('fullheight', info.height)
+            if (!img.data('region'))
+                img.data('region', `${parseInt(info.width / 2) - 100},${parseInt(info.height / 2) - 100},200,200`)
             callback()
         })
     }
@@ -112,6 +114,12 @@ class TexasArtProject {
         let iiif_src
         let width = size
         let height = size
+
+        if (img.data('display-restriction') === 'Thumbnail Only' && !region_only) {
+            region_only = true
+            width = 200
+            height = 200
+        }
 
         if (region_only) {
             iiif_src = `${img.data('iiif-identifier')}/${img.data('region')}/${size},${size}/0/default.png`
@@ -208,7 +216,7 @@ class ArtGrid {
         let sender = this
         this.observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry && entry.isIntersecting && entry.intersectionRatio >= 1.0) {
+                if (entry && entry.isIntersecting && entry.intersectionRatio >= 0.3) {
                     let img = jQuery(entry.target)
 
                     if (!img.data('loaded')) {
@@ -219,7 +227,6 @@ class ArtGrid {
                             sender.clo.render_image(img, img_width)
                         } else {
                             sender.clo.inject_iiif_info(img, function() {
-                                img.data('region', `${parseInt(img.data('fullwidth') / 2) - 100},${parseInt(img.data('fullheight') / 2) - 100},200,200`)
                                 sender.clo.render_image(img, img_width)
                             })
                         }
@@ -232,7 +239,7 @@ class ArtGrid {
                     }
                 }
             })
-        }, {threshold: 1.0})
+        }, {threshold: 0.3})
 
         //this.element.addClass('d-flex')
         //this.element.addClass('flex-wrap')
@@ -308,7 +315,10 @@ class ArtGrid {
     load_images(reset=false) {
         let sender = this
 
-        if (reset) sender.element.empty()
+        if (reset) {
+            sender.element.empty()
+            sender.criteria.page = 1
+        }
 
         this.clo.make_request(
             `/api/corpus/${sender.clo.corpus_id}/ArtWork/`,
@@ -331,8 +341,9 @@ class ArtGrid {
                                 class="tap-artgrid-img img-responsive"
                                 data-artwork-id="${artwork.id}"
                                 data-iiif-identifier="${artwork.iiif_uri}"
+                                data-display-restriction="${artwork.display_restriction ? artwork.display_restriction.label : 'none'}"
                                 ${(index + 1 === artworks.records.length && artworks.meta.has_next_page) ? `data-next-page="${artworks.meta.page + 1}"` : ''}
-                                ${art_region ? `data-region="${art_region}"` : ''} 
+                                ${art_region ? `data-region="${art_region}"` : ''}
                               />
                             </div>
                         `)
@@ -354,12 +365,14 @@ class ArtGrid {
 
 
 class ArtMenu {
-    constructor(clo_instance, element, grid, search_label='Search') {
+    constructor(clo_instance, element, grid, search_label='Search', show_year=true, show_origin=true) {
         this.clo = clo_instance
         this.element = element
         this.grid = grid
+        this.active_filters = {}
 
         this.element.html(`
+            <div id="tap-artmenu-active-filters"></div>
             <h2 class="tap-menu-heading">${search_label}</h2>
             <div class="form-group">
                 <label for="tap-artmenu-search-box" class="sr-only">Search</label>
@@ -368,15 +381,19 @@ class ArtMenu {
             
             <h2 class="tap-menu-heading mt-2">Filter</h2>
             
+            ${show_year ? `
             <details class="tap-artmenu-list">
               <summary>Year</summary>
               <ul id="tap-artmenu-decade-list"></ul>
             </details>
+            ` : '' }
             
+            ${show_origin ? `
             <details class="tap-artmenu-list">
               <summary>Origin</summary>
               <ul id="tap-artmenu-origin-list"></ul>
             </details>
+            ` : '' }
             
             <details class="tap-artmenu-list">
               <summary>Collection</summary>
@@ -446,6 +463,7 @@ class ArtMenu {
             decade: {
                 params: { a_histogram_decade: "year__10" },
                 field_name: "year",
+                filter_label: 'Year',
                 parser: function(key, field_name) {
                     return {
                         label: parseInt(key),
@@ -457,27 +475,34 @@ class ArtMenu {
             origin: {
                 params: { a_terms_origin: "location.id,location.label.raw" },
                 field_name: "location",
+                filter_label: "Origin",
                 parser: generic_xref_parser
             },
             collection: {
                 params: { a_terms_collection: "collection.id,collection.label.raw" },
                 field_name: "collection",
+                filter_label: "Collection",
                 parser: generic_xref_parser
             },
             surface: {
                 params: { a_terms_surface: "surface" },
                 field_name: "surface",
+                filter_label: "Surface",
                 parser: generic_keyword_parser
             },
             medium: {
                 params: { a_terms_medium: "medium" },
                 field_name: "medium",
+                filter_label: "Medium",
                 parser: generic_keyword_parser
             },
         }
 
         let sender = this
-        for (let query in queries) {
+        let query_names = Object.keys(queries)
+        if (!show_year) query_names = query_names.filter(n => n !== 'decade')
+        if (!show_origin) query_names = query_names.filter(n => n !== 'origin')
+        query_names.forEach(query => {
             this.clo.make_request(
                 `/api/corpus/${sender.clo.corpus_id}/ArtWork/`,
                 'GET',
@@ -492,6 +517,7 @@ class ArtMenu {
                             list.append(`
                                 <li
                                     class="tap-artmenu-list-item"
+                                    data-filter-label="${queries[query].filter_label}"
                                     data-param="${link_info.search_param}"
                                     data-value="${link_info.search_value}">
                                   ${link_info.label}
@@ -501,7 +527,7 @@ class ArtMenu {
                     }
                 }
             )
-        }
+        })
 
         // perform and parse tag aggregations
         const tag_mappings = {
@@ -527,6 +553,7 @@ class ArtMenu {
                                 list.append(`
                                     <li
                                         class="tap-artmenu-list-item"
+                                        data-filter-label="${tag_mappings[list_name]}"
                                         data-param="f_tags.id"
                                         data-value="${id}">
                                       ${label.replace(`${tag_mappings[list_name]}: `, '')}
@@ -557,6 +584,7 @@ class ArtMenu {
                     list.append(`
                         <li
                             class="tap-artmenu-list-item"
+                            data-filter-label="Exhibition"
                             data-param="f_id|"
                             data-value="${exhibitions[label].join('__')}">
                           ${label}
@@ -584,6 +612,7 @@ class ArtMenu {
                     list.append(`
                         <li
                             class="tap-artmenu-list-item"
+                            data-filter-label="Prize"
                             data-param="f_id|"
                             data-value="${prizes[label].join('__')}">
                           ${label}
@@ -602,12 +631,13 @@ class ArtMenu {
             if (search_box.val()) {
                 clearTimeout(search_timer)
                 search_timer = setTimeout(function () {
-                    sender.grid.criteria = {
-                        page: 1,
-                        'page-size': 50,
-                        q: search_box.val()
-                    }
+                    sender.grid.criteria['q'] = search_box.val()
                     sender.grid.load_images(true)
+                    sender.active_filters['Search'] = {
+                        param: 'q',
+                        value: search_box.val()
+                    }
+                    sender.show_active_filters()
                 }, 1000)
             }
         })
@@ -615,11 +645,49 @@ class ArtMenu {
         // faceting clicks
         jQuery(document).on('click', '.tap-artmenu-list-item', function() {
             let list_item = jQuery(this)
-            let search = {}
-            search[list_item.data('param')] = list_item.data('value')
-            sender.grid.criteria = Object.assign({page: 1, 'page-size': 50}, search)
+            sender.grid.criteria[list_item.data('param')] = list_item.data('value')
             sender.grid.load_images(true)
+            sender.active_filters[list_item.data('filter-label')] = {
+                param: list_item.data('param'),
+                value: list_item.text()
+            }
+            sender.show_active_filters()
         })
+
+        // active filter deletion
+        jQuery(document).on('click', '.tap-artmenu-active-filter-delete-button', function() {
+            let badge = jQuery(this).parent()
+            let param = badge.data('param')
+            let label = badge.data('filter-label')
+
+            delete sender.grid.criteria[param]
+            sender.grid.load_images(true)
+
+            delete sender.active_filters[label]
+            sender.show_active_filters()
+        })
+    }
+
+    show_active_filters() {
+        let filter_div = jQuery('#tap-artmenu-active-filters')
+        let filter_labels = Object.keys(this.active_filters)
+        filter_div.empty()
+
+        if (filter_labels.length) {
+            filter_div.addClass('mt-4')
+            filter_labels.forEach(filter_label => {
+                let param = this.active_filters[filter_label].param
+                let value = this.active_filters[filter_label].value
+
+                filter_div.append(`
+                    <span class="badge tap-artmenu-active-filter" data-param="${param}" data-filter-label="${filter_label}">
+                      <span class="tap-artmenu-active-filter-label">${filter_label}: ${value}</span> <span class="dashicons dashicons-no-alt tap-artmenu-active-filter-delete-button"></span>
+                    </span>
+                `)
+            })
+        } else {
+            filter_div.removeClass('mt-4')
+        }
     }
 }
 
@@ -627,7 +695,7 @@ class ArtMenu {
 class ArtMap {
     constructor (clo_instance, texas_title, texas_tab, us_title, us_tab) {
         this.clo = clo_instance
-        this.criteria = {'page-size': 150, 'page': 1}
+        this.criteria = {'page-size': 150, 'page': 1, 'f_location.country': 'United States', 'f_location.state': 'Texas'}
         this.metadata = {}
         this.locations = {}
         this.texas_title = texas_title
@@ -678,19 +746,27 @@ class ArtMap {
             </div>
         `)
 
-        this.artslider = jQuery('#tap-artslider')
-        this.artslider[0].addCSS(`
-            .mark-value {
-                font-size: 12px;
-            }
-        `)
-
         this.texas_title.addClass('tap-tab')
         this.texas_title.data('tap-tab', 'texas')
         this.us_title.addClass('tap-tab')
         this.us_title.data('tap-tab', 'us')
 
         let sender = this
+
+        this.artslider = jQuery('#tap-artslider')[0]
+        this.artslider.addCSS(`
+            .mark-value {
+                font-size: 12px;
+            }
+        `)
+        this.artslider_timer = null
+        this.artslider.addEventListener('onMouseUp', (evt) => {
+            clearTimeout(sender.artslider_timer)
+            sender.artslider_timer = setTimeout(() => {
+                sender.criteria['r_year'] = `${sender.artslider.value1}to${sender.artslider.value2}`
+                sender.load_images()
+            }, 1000)
+        })
 
         jQuery('.tap-tab').click(function() {
             let clicked_tab = jQuery(this).data('tap-tab')
@@ -719,15 +795,15 @@ class ArtMap {
                     let texas_poly = L.polygon(texas_shape, {
                         color: '#d5b09d',
                         fill: true,
-                        fillOpacity: 1
+                        fillOpacity: 1,
+                        interactive: false
                     })
                     texas_poly.addTo(sender.texas_map)
                     texas_poly.bringToFront()
 
-                    sender.texas_map.on('click', e => { console.log(e) })
                     jQuery('.leaflet-control-attribution').detach().appendTo(jQuery('#tap-artmap-attribution-div'))
 
-                    sender.artmenu = new ArtMenu(sender.clo, jQuery('#tap-artmenu'), sender)
+                    sender.artmenu = new ArtMenu(sender.clo, jQuery('#tap-artmenu'), sender, 'Search', false, false)
                     sender.load_images()
 
                     sender.popup = L.popup({maxHeight: 300})
@@ -738,8 +814,13 @@ class ArtMap {
         }, 1000)
     }
 
-    load_images() {
+    load_images(reset=true) {
         let sender = this
+        let relevant_locations = []
+        Object.keys(sender.locations).forEach(loc_id => {
+            sender.locations[loc_id].artworks = []
+        })
+        if (sender.texas_cluster) sender.texas_cluster.remove()
 
         this.clo.make_request(
             `/api/corpus/${sender.clo.corpus_id}/ArtWork/`,
@@ -750,8 +831,13 @@ class ArtMap {
                     artworks.records.forEach(artwork => {
                         if (!(artwork.id in sender.metadata)) sender.metadata[artwork.id] = Object.assign({}, artwork)
 
-                        if (artwork.location && !(artwork.location.id in sender.locations)) {
-                            sender.locations[artwork.location.id] = Object.assign({ marker: null }, artwork.location)
+                        if (artwork.location) {
+                            if (!(artwork.location.id in sender.locations)) {
+                                sender.locations[artwork.location.id] = Object.assign({marker: null}, artwork.location)
+                                sender.locations[artwork.location.id].artworks = []
+                            }
+                            relevant_locations.push(artwork.location.id)
+                            sender.locations[artwork.location.id].artworks.push(artwork.id)
                         }
                     })
 
@@ -785,39 +871,41 @@ class ArtMap {
                         maxClusterRadius: 60
                     })
 
-                    Object.keys(sender.locations).forEach(location_id => {
+                    relevant_locations.forEach(location_id => {
                         let loc = sender.locations[location_id]
-                        if (!loc.marker && loc.coordinates) {
-                            loc.coordinates = [loc.coordinates[1], loc.coordinates[0]]
-                            loc.marker = new L.Marker(
-                                loc.coordinates,
-                                {
-                                    icon: new L.DivIcon({
-                                        className: 'tap-artmap-marker',
-                                        iconSize: [100,20],
-                                        html: `
-                                            <svg height="20" width="20">
-                                              <circle
-                                                class="tap-artmap-marker-circle"
-                                                cx="10"
-                                                cy="10"
-                                                r="8"
-                                                fill="white"
-                                                stroke="white"
-                                                stroke-width="1" />
-                                            </svg>
-                                            <span class="tap-artmap-marker-label">
-                                              ${loc.name}
-                                            </span>
-                                        `
-                                    })
-                                }
-                            )
-                            loc.marker.on('click', function(e) {
-                                sender.display_metadata(location_id)
-                            })
+                        if (loc.coordinates) {
+                            if (!loc.marker) {
+                                loc.coordinates = [loc.coordinates[1], loc.coordinates[0]]
+                                loc.marker = new L.Marker(
+                                    loc.coordinates,
+                                    {
+                                        icon: new L.DivIcon({
+                                            className: 'tap-artmap-marker',
+                                            iconSize: [100, 20],
+                                            iconAnchor: [0, 0],
+                                            html: `
+                                                <svg height="20" width="20">
+                                                  <circle
+                                                    class="tap-artmap-marker-circle"
+                                                    cx="10"
+                                                    cy="10"
+                                                    r="8"
+                                                    fill="white"
+                                                    stroke="white"
+                                                    stroke-width="1" />
+                                                </svg>
+                                                <span class="tap-artmap-marker-label">
+                                                  ${loc.name}
+                                                </span>
+                                            `
+                                        })
+                                    }
+                                )
+                                loc.marker.on('click', function (e) {
+                                    sender.display_metadata(location_id)
+                                })
+                            }
                             sender.texas_cluster.addLayer(loc.marker)
-                            //loc.marker.addTo(sender.texas_map)
                         }
                     })
                     sender.texas_map.addLayer(sender.texas_cluster)
@@ -828,69 +916,69 @@ class ArtMap {
 
     display_metadata(location_id) {
         let sender = this
+        let meta = `<div class="accordion" id="tap-artmap-metadata-popup">`
         sender.current_location = location_id
-        this.clo.make_request(
-            `/api/corpus/${sender.clo.corpus_id}/ArtWork/`,
-            'GET',
-            {'f_location.id': location_id, 'page-size': 100},
-            function(artworks) {
-                let meta = `<div class="accordion" id="tap-artmap-metadata-popup">`
-                if (artworks.records) {
-                    artworks.records.forEach((artwork, i) => {
-                        let tags = []
-                        artwork.tags.forEach(tag => {
-                            let [key, value] = tag.label.split(': ')
-                            tags.push(`<dt>${key}:</dt><dd>${value}</dd>`)
-                        })
 
-                        meta += `
-                            <div class="card">
-                              <div class="tap-card-header" id="heading${i}">
-                                  <button class="btn btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse${i}" aria-expanded="${i === 0 ? 'true': 'false'}" aria-controls="collapse${i}">
-                                    ${i + 1}. ${artwork.title}
-                                  </button>
-                              </div>
-                            
-                              <div id="collapse${i}" class="collapse${i === 0 ? ' show' : ''}" aria-labelledby="heading${i}" data-parent="#tap-artmap-metadata-popup">
-                                <div class="card-body">
-                                  <img
-                                    id="tap-artgrid-img-${artwork.id}"
-                                    src="${sender.clo.plugin_url + '/img/image-loading.svg'}"
-                                    class="tap-artgrid-img img-responsive mb-2"
-                                    data-artwork-id="${artwork.id}"
-                                    data-iiif-identifier="${artwork.iiif_uri}" 
-                                  />
-                                  <dl>
-                                    <dt>Year:</dt><dd>${artwork.year}</dd>
-                                    ${artwork.location ? `<dt>Origin:</dt><dd>${artwork.location.label}</dd>` : ''}
-                                    ${tags.join('\n')}
-                                    <dt>Surface:</dt><dd>${artwork.surface}</dd>
-                                    <dt>Medium:</dt><dd>${artwork.medium}</dd>
-                                    <dt>Size:</dt><dd>${artwork.size_inches}</dd>
-                                    ${artwork.collection ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
-                                  </dl>
-                                </div>
-                              </div>
-                            </div>
-                        `
-                    })
-
-                    meta += `</div>`
-                    sender.popup
-                        .setLatLng(sender.locations[location_id].coordinates)
-                        .setContent(meta)
-                        .openOn(sender.texas_map)
-
-                    let popup_metadata_pane = jQuery(`#tap-artmap-metadata-popup`)
-                    artworks.records.forEach(artwork => {
-                        let img = jQuery(`#tap-artgrid-img-${artwork.id}`)
-                        sender.clo.inject_iiif_info(img, function() {
-                            sender.clo.render_image(img, popup_metadata_pane.width() - 20, false)
-                        })
-                    })
-                }
+        sender.locations[location_id].artworks.forEach((artwork_id, i) => {
+            let artwork = sender.metadata[artwork_id]
+            let art_region = null
+            if (artwork.hasOwnProperty('featured_region_x') && artwork.featured_region_x) {
+                art_region = `${artwork.featured_region_x},${artwork.featured_region_y},${artwork.featured_region_width},${artwork.featured_region_width}`;
             }
-        )
+
+            let tags = []
+            artwork.tags.forEach(tag => {
+                let [key, value] = tag.label.split(': ')
+                tags.push(`<dt>${key}:</dt><dd>${value}</dd>`)
+            })
+
+            meta += `
+                <div class="card">
+                  <div class="tap-card-header" id="heading${i}">
+                      <button class="btn btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse${i}" aria-expanded="${i === 0 ? 'true': 'false'}" aria-controls="collapse${i}">
+                        ${i + 1}. ${artwork.title}
+                      </button>
+                  </div>
+                
+                  <div id="collapse${i}" class="collapse${i === 0 ? ' show' : ''}" aria-labelledby="heading${i}" data-parent="#tap-artmap-metadata-popup">
+                    <div class="card-body">
+                      <img
+                        id="tap-artgrid-img-${artwork.id}"
+                        src="${sender.clo.plugin_url + '/img/image-loading.svg'}"
+                        class="tap-artgrid-img img-responsive mb-2"
+                        data-artwork-id="${artwork.id}"
+                        data-iiif-identifier="${artwork.iiif_uri}" 
+                        data-display-restriction="${artwork.display_restriction ? artwork.display_restriction.label : 'none'}"
+                        ${art_region ? `data-region="${art_region}"` : ''}
+                      />
+                      <dl>
+                        <dt>Year:</dt><dd>${artwork.year}</dd>
+                        ${artwork.location ? `<dt>Origin:</dt><dd>${artwork.location.label}</dd>` : ''}
+                        ${tags.join('\n')}
+                        <dt>Surface:</dt><dd>${artwork.surface}</dd>
+                        <dt>Medium:</dt><dd>${artwork.medium}</dd>
+                        <dt>Size:</dt><dd>${artwork.size_inches}</dd>
+                        ${artwork.collection ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+            `
+        })
+
+        meta += `</div>`
+        sender.popup
+            .setLatLng(sender.locations[location_id].coordinates)
+            .setContent(meta)
+            .openOn(sender.texas_map)
+
+        let popup_metadata_pane = jQuery(`#tap-artmap-metadata-popup`)
+        sender.locations[location_id].artworks.forEach(artwork_id => {
+            let img = jQuery(`#tap-artgrid-img-${artwork_id}`)
+            sender.clo.inject_iiif_info(img, function() {
+                sender.clo.render_image(img, popup_metadata_pane.width() - 20, false)
+            })
+        })
     }
 }
 
