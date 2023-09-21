@@ -4,6 +4,7 @@ class TexasArtProject {
         this.token = corpora_token
         this.corpus_id = clo_corpus_id
         this.path = window.location.pathname
+        this.get_params = new URLSearchParams(window.location.search)
         this.plugin_url = plugin_url
         this.site_header = null
         this.header_image = null
@@ -11,6 +12,7 @@ class TexasArtProject {
         this.artgrid = null
         this.artmenu = null
         this.artmap = null
+        this.artdetail = null
 
         // SITE HEADER
         //let tap_site_header = jQuery('#tap-header-div>.elementor-container>.elementor-column>.elementor-widget-wrap')
@@ -49,6 +51,12 @@ class TexasArtProject {
                 jQuery(tap_maptitles[1]),
                 jQuery(tap_maptabs[1])
             )
+        }
+        
+        // ARTDETAIL
+        let tap_artdetail = jQuery('#tap-artwork-detail-div')
+        if (tap_artdetail.length) {
+            this.artdetail = new ArtDetail(this, tap_artdetail)
         }
 
         // rig up the site footer
@@ -142,8 +150,8 @@ class TexasArtProject {
 }
 
 class SiteHeader {
-    constructor(clo_instance, element) {
-        this.clo = clo_instance
+    constructor(tap_instance, element) {
+        this.tap = tap_instance
         this.element = element
 
         jQuery('head').append(`<link rel="stylesheet" href="https://use.typekit.net/qbi7knm.css">`)
@@ -154,7 +162,7 @@ class SiteHeader {
             {path: '/artists/', name: "Featured Artists"},
             {path: '/contact/', name: "Contact Us"}
         ]
-        let nav_links = top_navs.map(nav => `<a href="${nav.path}"${nav.path === this.clo.path ? ' class="active"' : ''}>${nav.name}</a>`)
+        let nav_links = top_navs.map(nav => `<a href="${nav.path}"${nav.path === this.tap.path ? ' class="active"' : ''}>${nav.name}</a>`)
 
         this.element.append(`
             <div id="tap-nav-div" class="d-flex flex-grow-1 justify-content-end">
@@ -177,27 +185,27 @@ class SiteHeader {
 }
 
 class HeaderImage {
-    constructor(clo_instance, element) {
-        this.clo = clo_instance
+    constructor(tap_instance, element) {
+        this.tap = tap_instance
         this.element = element
         this.headers = {
             '/': {
-                src: `${this.clo.plugin_url}/img/home-collage.png`,
+                src: `${this.tap.plugin_url}/img/home-collage.png`,
                 alt: "The Texas Art Project"
             },
             '/about/': {
-                src: `${this.clo.plugin_url}/img/about-heading.png`,
+                src: `${this.tap.plugin_url}/img/about-heading.png`,
                 alt: "About the Texas Art Project"
             },
             '/map/': {
-                src: `${this.clo.plugin_url}/img/map-timeline.png`,
+                src: `${this.tap.plugin_url}/img/map-timeline.png`,
                 alt: "Map and Timeline"
             }
         }
 
-        if (this.clo.path in this.headers) {
+        if (this.tap.path in this.headers) {
             this.element.append(`
-                <img class="tap-header-image" src="${this.headers[this.clo.path].src}" alt="${this.headers[this.clo.path].alt}" loading="lazy" border="0" />
+                <img class="tap-header-image" src="${this.headers[this.tap.path].src}" alt="${this.headers[this.tap.path].alt}" loading="lazy" border="0" />
             `)
         }
     }
@@ -205,13 +213,29 @@ class HeaderImage {
 
 
 class ArtGrid {
-    constructor(clo_instance, element) {
-        this.clo = clo_instance
+    constructor(tap_instance, element) {
+        this.tap = tap_instance
         this.element = element
         this.criteria = {'page-size': 50, 'page': 1}
         this.grid_width = 600
         this.cell_width = 200
         this.metadata = {}
+
+        // handle any URL GET params passed in and register them as active filters
+        this.initial_filter = null
+        let valid_get_params = {
+            collection: 'f_collection.id',
+            location: 'f_location.id',
+            arttag: 'f_tags.id',
+            surface: 'f_surface',
+            medium: 'f_medium'
+        }
+        Object.keys(valid_get_params).forEach(param => {
+            if (this.tap.get_params.has(param)) {
+                this.criteria[valid_get_params[param]] = this.tap.get_params.get(param)
+                this.initial_filter = valid_get_params[param]
+            }
+        })
 
         let sender = this
         this.observer = new IntersectionObserver((entries) => {
@@ -224,10 +248,10 @@ class ArtGrid {
                         let img_width = parseInt(img_rect.width)
 
                         if (img.data('region')) {
-                            sender.clo.render_image(img, img_width)
+                            sender.tap.render_image(img, img_width)
                         } else {
-                            sender.clo.inject_iiif_info(img, function() {
-                                sender.clo.render_image(img, img_width)
+                            sender.tap.inject_iiif_info(img, function() {
+                                sender.tap.render_image(img, img_width)
                             })
                         }
 
@@ -252,7 +276,7 @@ class ArtGrid {
             if (featured_img.length) {
                 featured_cell.removeClass('col-md-12')
                 featured_cell.addClass('col-md-4')
-                sender.clo.render_image(featured_img, parseInt(cell.width()))
+                sender.tap.render_image(featured_img, parseInt(cell.width()))
                 jQuery('.tap-artgrid-metadata').remove()
                 featured_cell.removeClass('featured')
                 featured_img.removeClass('featured')
@@ -262,10 +286,10 @@ class ArtGrid {
             let img = jQuery(`#tap-artgrid-img-${artwork_id}`)
             let grid_width = parseInt(sender.element.width())
             if (img.data('fullwidth'))
-                sender.clo.render_image(img, grid_width - 10, false)
+                sender.tap.render_image(img, grid_width - 10, false)
             else
-                sender.clo.inject_iiif_info(img, function() {
-                    sender.clo.render_image(img, grid_width - 10, false)
+                sender.tap.inject_iiif_info(img, function() {
+                    sender.tap.render_image(img, grid_width - 10, false)
                 })
 
             let meta = sender.metadata[artwork_id]
@@ -290,16 +314,17 @@ class ArtGrid {
                       ${meta.collection ? `<dt>Collection:</dt><dd>${meta.collection.label}</dd>` : ''}
                     </dl>
                   </div>
-                  <div class="col-md-8">
-                    <dl>
+                  <div class="col-md-8 d-flex flex-column">
+                    <dl style="flex: 1;">
                       <dt>Caption:</dt><dd>${meta.caption ? meta.caption : 'None'}</dd>
                     </dl>
+                    <div class="w-100">
+                      <a class="float-right" href="/artwork/${meta.id}/" target="_blank">See more...</a>
+                    </div>
                   </div>
                 </div>
               </div>
             `)
-
-            console.log(meta)
 
             cell.removeClass('col-md-4')
             cell.addClass('col-sm-12')
@@ -320,8 +345,8 @@ class ArtGrid {
             sender.criteria.page = 1
         }
 
-        this.clo.make_request(
-            `/api/corpus/${sender.clo.corpus_id}/ArtWork/`,
+        this.tap.make_request(
+            `/api/corpus/${sender.tap.corpus_id}/ArtWork/`,
             'GET',
             sender.criteria,
             function(artworks) {
@@ -337,7 +362,7 @@ class ArtGrid {
                             <div id="tap-artgrid-cell-${artwork.id}" class="col-md-4 tap-artgrid-cell" data-artwork-id="${artwork.id}">
                               <img
                                 id="tap-artgrid-img-${artwork.id}"
-                                src="${sender.clo.plugin_url + '/img/image-loading.svg'}"
+                                src="${sender.tap.plugin_url + '/img/image-loading.svg'}"
                                 class="tap-artgrid-img img-responsive"
                                 data-artwork-id="${artwork.id}"
                                 data-iiif-identifier="${artwork.iiif_uri}"
@@ -365,8 +390,8 @@ class ArtGrid {
 
 
 class ArtMenu {
-    constructor(clo_instance, element, grid, search_label='Search', show_year=true, show_origin=true) {
-        this.clo = clo_instance
+    constructor(tap_instance, element, grid, search_label='Search', show_year=true, show_origin=true) {
+        this.tap = tap_instance
         this.element = element
         this.grid = grid
         this.active_filters = {}
@@ -506,8 +531,8 @@ class ArtMenu {
         if (!show_year) query_names = query_names.filter(n => n !== 'decade')
         if (!show_origin) query_names = query_names.filter(n => n !== 'origin')
         query_names.forEach(query => {
-            this.clo.make_request(
-                `/api/corpus/${sender.clo.corpus_id}/ArtWork/`,
+            this.tap.make_request(
+                `/api/corpus/${sender.tap.corpus_id}/ArtWork/`,
                 'GET',
                 Object.assign({'page-size': 0}, queries[query].params),
                 function(data) {
@@ -540,8 +565,8 @@ class ArtMenu {
             subject: "Subject"
         }
 
-        this.clo.make_request(
-            `/api/corpus/${sender.clo.corpus_id}/ArtWork/`,
+        this.tap.make_request(
+            `/api/corpus/${sender.tap.corpus_id}/ArtWork/`,
             'GET',
             {a_terms_tags: 'tags.id,tags.label.raw'},
             function(data) {
@@ -570,8 +595,8 @@ class ArtMenu {
         )
 
         // exhibitions
-        this.clo.make_request(
-            `/api/corpus/${sender.clo.corpus_id}/Exhibition/`,
+        this.tap.make_request(
+            `/api/corpus/${sender.tap.corpus_id}/Exhibition/`,
             'GET',
             {'page-size': 100, only: 'artwork.id,exhibit.label'},
             function(data) {
@@ -598,8 +623,8 @@ class ArtMenu {
         )
 
         // prizes
-        this.clo.make_request(
-            `/api/corpus/${sender.clo.corpus_id}/Prize/`,
+        this.tap.make_request(
+            `/api/corpus/${sender.tap.corpus_id}/Prize/`,
             'GET',
             {'page-size': 100, 'e_artwork.id': 'y', only: 'artwork.id,name'},
             function(data) {
@@ -669,6 +694,15 @@ class ArtMenu {
             delete sender.active_filters[label]
             sender.show_active_filters()
         })
+
+        // check if grid is already filtered
+        if (this.grid.initial_filter) {
+            this.active_filters['Filter'] = {
+                param: this.grid.initial_filter,
+                value: 'from URL'
+            }
+            sender.show_active_filters()
+        }
     }
 
     show_active_filters() {
@@ -696,8 +730,8 @@ class ArtMenu {
 
 
 class ArtMap {
-    constructor (clo_instance, texas_title, texas_tab, us_title, us_tab) {
-        this.clo = clo_instance
+    constructor (tap_instance, texas_title, texas_tab, us_title, us_tab) {
+        this.tap = tap_instance
         this.criteria = {'page-size': 150, 'page': 1, 'f_location.country': 'United States', 'f_location.state': 'Texas'}
         this.metadata = {}
         this.locations = {}
@@ -782,7 +816,7 @@ class ArtMap {
         })
 
         setTimeout(function() {
-            fetch(`${sender.clo.plugin_url}/texas_fixed.json`)
+            fetch(`${sender.tap.plugin_url}/texas_fixed.json`)
                 .then(response => response.json())
                 .then(texas_shape => {
                     sender.texas_map = L.map('tap-texas-artmap', { zoomSnap: 0.3 })
@@ -806,7 +840,7 @@ class ArtMap {
 
                     jQuery('.leaflet-control-attribution').detach().appendTo(jQuery('#tap-artmap-attribution-div'))
 
-                    sender.artmenu = new ArtMenu(sender.clo, jQuery('#tap-artmenu'), sender, 'Search', false, false)
+                    sender.artmenu = new ArtMenu(sender.tap, jQuery('#tap-artmenu'), sender, 'Search', false, false)
                     sender.load_images()
 
                     sender.popup = L.popup({maxHeight: 300})
@@ -825,8 +859,8 @@ class ArtMap {
         })
         if (sender.texas_cluster) sender.texas_cluster.remove()
 
-        this.clo.make_request(
-            `/api/corpus/${sender.clo.corpus_id}/ArtWork/`,
+        this.tap.make_request(
+            `/api/corpus/${sender.tap.corpus_id}/ArtWork/`,
             'GET',
             sender.criteria,
             function(artworks) {
@@ -947,7 +981,7 @@ class ArtMap {
                     <div class="card-body">
                       <img
                         id="tap-artgrid-img-${artwork.id}"
-                        src="${sender.clo.plugin_url + '/img/image-loading.svg'}"
+                        src="${sender.tap.plugin_url + '/img/image-loading.svg'}"
                         class="tap-artgrid-img img-responsive mb-2"
                         data-artwork-id="${artwork.id}"
                         data-iiif-identifier="${artwork.iiif_uri}" 
@@ -963,6 +997,7 @@ class ArtMap {
                         <dt>Size:</dt><dd>${artwork.size_inches}</dd>
                         ${artwork.collection ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
                       </dl>
+                      <a class="mt-2" href="/artwork/${artwork.id}/" target="_blank">See more...</a>
                     </div>
                   </div>
                 </div>
@@ -978,133 +1013,111 @@ class ArtMap {
         let popup_metadata_pane = jQuery(`#tap-artmap-metadata-popup`)
         sender.locations[location_id].artworks.forEach(artwork_id => {
             let img = jQuery(`#tap-artgrid-img-${artwork_id}`)
-            sender.clo.inject_iiif_info(img, function() {
-                sender.clo.render_image(img, popup_metadata_pane.width() - 20, false)
+            sender.tap.inject_iiif_info(img, function() {
+                sender.tap.render_image(img, popup_metadata_pane.width() - 20, false)
             })
         })
     }
 }
 
 
-class SiteFooter {
-    constructor (clo_instance, element) {
-        this.clo = clo_instance
+class ArtDetail {
+    constructor(tap_instance, element) {
+        this.tap = tap_instance
         this.element = element
+        this.artwork_id = null
+        this.dragon = null
 
         this.element.html(`
-            <footer class="footer py-4">
-              <app-footer>
-                <div id="footer_wrapper" class="container-fluid">
-                  <div id="footer" class="row align-items-center justify-content-center">
-                    <div id="footer_links" class="col-3">
-                      <div class="row align-items-center justify-content-center">
-                        <a href="https://read.dukeupress.edu/">read.dukeupress.edu</a>
-                        &nbsp;<span>|</span>&nbsp
-                        <a href="https://www.dukeupress.edu/Legal/Privacy">Policies</a>
-                        &nbsp;<span>|</span>&nbsp
-                        <a href="mailto:customerrelations@dukepress.edu">Contact Us</a>
-                        <div class="w-100"></div>
-                        <span>© Duke University Press</span>
-                      </div>
-                    </div>
-                    <div id="footer_logos" class="col-7">
-                      <div class="row align-items-center justify-content-center">
-                        <a href="https://www.dukeupress.edu/"><img class="mx-3" src="/wp-content/plugins/clo/img/duke_logo.png" alt="Duke University Press" border="0"></a>
-                        <a href="https://codhr.tamu.edu"><img class="mx-3" src="/wp-content/plugins/clo/img/CoDHR-logo.png" alt="Center of Digital Humanities Research at Texas A&amp;M University" border="0" style="max-height: 70px;"></a>
-                        <a href="https://library.duke.edu/rubenstein/"><img class="mx-3" src="/wp-content/plugins/clo/img/rubenstein-collection.png" alt="Rubenstein Collection" border="0" style="background-color: #000000; padding: 2px;"></a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </app-footer>
-            </footer>
+            <div class="row flex-grow-1${window.innerWidth <= 767 ? ' flex-column-reverse' : ''}" style="padding: 20px;">
+              <div id="tap-artdetail-metadata-div" class="col-md-4 col-sm-12"></div>
+              <div id="tap-artdetail-image-div" class="col-md-8 col-sm-12"></div>
+            </div>
         `)
-    }
-}
 
+        this.metadata_div = jQuery('#tap-artdetail-metadata-div')
+        this.image_div = jQuery('#tap-artdetail-image-div')
 
-class HomePageWidget {
-    constructor(clo_instance, element) {
-        this.clo = clo_instance
-        this.element = element
-        this.quotes = [
-            "What we become depends on what we read after all of the professors are done with us. The greatest university of all is a collection of books.",
-            "I've got a great ambition to die of exhaustion rather than boredom.",
-            "All that mankind has done, thought, gained, or been; it is lying as in magic preservation in the pages of books.",
-            "Go as far as you can see; when you get there, you'll be able to see further.",
-            "A loving heart is the beginning of all knowledge.",
-            "Conviction is worthless unless it is converted into conduct.",
-            "A loving heart is the beginning of all knowledge.",
-            "Conviction is worthless unless it is converted into conduct.",
-            "Every man is my superior in that I may learn from him.",
-            "The tragedy of life is not so much what men suffer, but rather what they miss.",
-            "Popular opinion is the greatest lie in the world."
-        ]
+        let path_parts = window.location.pathname.split('/')
+        if (path_parts.length === 4) {
+            this.artwork_id = path_parts[2]
 
-        let sender = this
-
-        sender.clo.make_request(
-            `/api/corpus/${sender.clo.corpus_id}/Photo/`,
-            'GET',
-            {'e_frontispiece_volume.label': 'y', 'only': 'iiif_url', 'page-size': 60},
-            function(photos) {
-                if (photos.hasOwnProperty('records') && photos.records.length) {
-                    let rand_photo_1 = sender.clo.random_index(photos.records.length)
-                    let rand_photo_2 = sender.clo.random_index(photos.records.length)
-                    let rand_quote = sender.clo.random_index(sender.quotes.length)
-                    while (rand_photo_2 === rand_photo_1) rand_photo_2 = sender.clo.random_index(photos.records.length)
-
-                    rand_photo_1 = `${photos.records[rand_photo_1].iiif_url}/full/,200/0/default.jpg`
-                    rand_photo_2 = `${photos.records[rand_photo_2].iiif_url}/full/,200/0/default.jpg`
-                    rand_quote = sender.quotes[rand_quote]
-
-                    sender.element.html(`
-                        <div class="d-flex flex-column flex-grow-1 justify-content-start align-items-center px-4">
-                          <div class="row mt-3 mb-3">
-                            <img src="${rand_photo_1}" class="portrait pr-3">
-                            <img src="${rand_photo_2}" class="portrait pl-3">
-                          </div>
-                          <div class="clo-quote-container mt-3">
-                            <p>“${rand_quote}”</p>
-                          </div>
-                        </div>
-                    `)
-                }
-            }
-        )
-    }
-}
-
-
-class ArtworkViewer {
-    constructor(clo_instance, element) {
-        this.clo = clo_instance
-        this.element = element
-
-        let sender = this
-
-        sender.clo.make_request(
-            `/api/corpus/${sender.clo.corpus_id}/PhotoAlbum/`,
-            'GET',
-            {'s_album_no': 'asc', 'only': 'title,album_no,description'},
-            function (albums) {
-                if (albums.hasOwnProperty('records') && albums.records.length) {
-                    let html = '<div class="container mt-1"><div class="row"><div class="col-sm-6">'
-
-                    albums.records.map((album, index) => {
-                        html += `
-                            <div class="pl-4">
-                              <a class="clo-bold-orange" href="/album-viewer/${album.album_no}">${album.title}</a>
-                              <p>${album.description}</p>
-                            </div>
-                        `
-
-                        if (index === 3) html += '</div><div class="col-sm-6">'
+            let sender = this
+            this.tap.make_request(
+                `/api/corpus/${sender.tap.corpus_id}/ArtWork/${sender.artwork_id}/`,
+                'GET',
+                sender.criteria,
+                function(meta) {
+                    let tags = []
+                    meta.tags.forEach(tag => {
+                        let [key, value] = tag.label.split(': ')
+                        tags.push(`<dt>${key}:</dt><dd><a href="/?arttag=${tag.id}">${value}</a></dd>`)
                     })
-                    html += '</div></div></div>'
-                    sender.element.html(html)
+
+                    sender.metadata_div.append(`
+                      <div class="tap-artgrid-metadata p-0 m-0">
+                        <h1 class="pt-0">${meta.title}</h1>
+                        <dl>
+                          ${meta.caption ? `<dt>Caption:</dt><dd>${meta.caption}</dd>` : ''}
+                          ${meta.alt_title ? `<dt>Alternate Title</dt><dd>${meta.alt_title}</dd>` : ''}
+                          <dt>Creator:</dt><dd>${meta.artists[0].label}</dd>
+                          <dt>Year:</dt><dd>${meta.year}</dd>
+                          ${meta.location ? `<dt>Origin:</dt><dd><a href="/?location=${meta.location.id}">${meta.location.label}</a></dd>` : ''}
+                          ${meta.edition ? `<dt>Edition</dt><dd>${meta.edition}</dd>` : ''}
+                          ${tags.join('\n')}
+                          <dt>Surface:</dt><dd><a href="/?surface=${meta.surface}">${meta.surface}</a></dd>
+                          <dt>Medium:</dt><dd><a href="/?medium=${meta.medium}">${meta.medium}</a></dd>
+                          <dt>Size:</dt><dd>${meta.size_inches}</dd>
+                          ${meta.inscriptions ? `<dt>Inscriptions</dt><dd>${meta.inscriptions}</dd>` : ''}
+                          ${meta.collection ? `<dt>Collection:</dt><dd><a href="/?collection=${meta.collection.id}">${meta.collection.label}</a></dd>` : ''}
+                        </dl>
+                      </div>
+                    `)
+
+                    if (meta.display_restriction && meta.display_restriction.label === 'Thumbnail Only') {
+                        let art_region = null
+                        if (meta.hasOwnProperty('featured_region_x') && meta.featured_region_x) {
+                            art_region = `${meta.featured_region_x},${meta.featured_region_y},${meta.featured_region_width},${meta.featured_region_width}`;
+                        }
+                        sender.image_div.append(`
+                            <img
+                                id="tap-artgrid-img-${meta.id}"
+                                src="${sender.tap.plugin_url + '/img/image-loading.svg'}"
+                                class="tap-artgrid-img img-responsive mt-4"
+                                data-artwork-id="${meta.id}"
+                                data-iiif-identifier="${meta.iiif_uri}"
+                                data-display-restriction="${meta.display_restriction ? meta.display_restriction.label : 'none'}"
+                                ${art_region ? `data-region="${art_region}"` : ''}
+                                style="display: block; margin: auto;"
+                            />
+                            <div class="text-center text-muted mt-2">The display of this image has been restricted.</div>
+                        `)
+                        let img = jQuery(`#tap-artgrid-img-${meta.id}`)
+                        sender.tap.inject_iiif_info(img, function() {
+                            sender.tap.render_image(img, 200, true)
+                        })
+                    } else {
+                        let dragon_height = `${sender.image_div.height() - 40}px`
+                        if (window.innerWidth <= 767) dragon_height = '50vh';
+                        sender.image_div.append(`
+                            <div id="tap-dragon" class="w-100" style="height: ${dragon_height};"></div>
+                        `)
+
+                        sender.dragon = OpenSeadragon({
+                            id:                 "tap-dragon",
+                            prefixUrl:          `${sender.tap.plugin_url}/js/openseadragon/images/`,
+                            preserveViewport:   false,
+                            visibilityRatio:    1,
+                            minZoomLevel:       .25,
+                            maxZoomLevel:       5,
+                            defaultZoomLevel:   0,
+                            //homeFillsViewer:    true,
+                            showRotationControl: true,
+                            tileSources:   [meta.iiif_uri],
+                        })
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 }

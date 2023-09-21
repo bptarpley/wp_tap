@@ -95,11 +95,11 @@ a:hover {
 
 .tap-artgrid-img {
     transition: all 1s linear;
-    cursor: pointer;
 }
 
-.tap-artgrid-img:hover {
+.tap-artgrid-cell .tap-artgrid-img:hover {
     filter: brightness(1.5);
+    cursor: pointer;
 }
 
 .tap-artgrid-metadata {
@@ -277,4 +277,16 @@ details ul li:hover {
     font-size: inherit;
     background-color: #d5b09d;
     border-radius: 0;
+}
+
+#tap-artwork-detail-div {
+    background-color: #f4f4f4;
+}
+
+#tap-artdetail-image-div {
+    background-color: #FFFFFF;
+}
+
+#tap-artdetail-metadata-div dl {
+    grid-template-columns: 20% auto;
 }
