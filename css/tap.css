@@ -170,7 +170,7 @@ dd.below {
     -ms-overflow-style: none;  /* Internet Explorer 10+ */
 }
 
-@media (max-width: 1250px) {
+@media (max-width: 767px) {
     #tap-artmenu {
         position: inherit;
         top: unset;
