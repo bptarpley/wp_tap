@@ -41,16 +41,9 @@ class TexasArtProject {
         }
 
         // ARTMAP
-        let tap_maptitles = jQuery('.elementor-tab-title')
-        let tap_maptabs = jQuery('.elementor-tab-content')
-        if (tap_maptitles.length === 4 && tap_maptabs.length === 2) {
-            this.artmap = new ArtMap(
-                this,
-                jQuery(tap_maptitles[0]),
-                jQuery(tap_maptabs[0]),
-                jQuery(tap_maptitles[1]),
-                jQuery(tap_maptabs[1])
-            )
+        let tap_artmap = jQuery('#tap-artmap')
+        if (tap_artmap.length) {
+            this.artmap = new ArtMap(this, tap_artmap)
         }
         
         // ARTDETAIL
@@ -693,6 +686,11 @@ class ArtMenu {
 
             delete sender.active_filters[label]
             sender.show_active_filters()
+
+            if (param === 'r_year' && sender.grid.artslider) {
+                sender.grid.artslider.value1 = 1880
+                sender.grid.artslider.value2 = 1990
+            }
         })
 
         // check if grid is already filtered
@@ -730,21 +728,39 @@ class ArtMenu {
 
 
 class ArtMap {
-    constructor (tap_instance, texas_title, texas_tab, us_title, us_tab) {
+    constructor (tap_instance, artmap_div) {
         this.tap = tap_instance
-        this.criteria = {'page-size': 150, 'page': 1, 'f_location.country': 'United States', 'f_location.state': 'Texas'}
+        this.element = artmap_div
+        this.criteria = {'page-size': 150, 'page': 1, 'f_location.country': 'United States'}
         this.metadata = {}
         this.locations = {}
-        this.texas_title = texas_title
-        this.texas_tab = texas_tab
+
+        this.element.html(`
+            <ul class="nav nav-tabs" id="tap-artmap-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="texas-tab" data-tab-name="texas" data-toggle="tab" data-target="#texas" type="button" role="tab" aria-controls="texas" aria-selected="true">Texas</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="us-tab" data-toggle="tab" data-target="#us" type="button" role="tab" aria-controls="us" aria-selected="false">United States</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="tap-artmap-content">
+                <div class="tab-pane fade show active" id="texas" role="tabpanel" aria-labelledby="texas-tab">Texas</div>
+                <div class="tab-pane fade" id="us" role="tabpanel" aria-labelledby="us-tab">United States</div>
+            </div>
+        `)
+
+        this.texas_tab = jQuery('#texas')
         this.texas_map = null
-        this.texas_cluster = null
 
-        this.us_title = us_title
-        this.us_tab = us_tab
+        this.marker_cluster = null
+
+        this.us_tab = jQuery('#us')
         this.us_map = null
+        this.us_map_drawn = false
 
-        this.current_tab = 'texas'
+        this.active_tab = 'texas'
+        this.inactive_tab = 'us'
         this.current_location = null
 
         this.popup = null
@@ -754,7 +770,7 @@ class ArtMap {
               <div class="col-sm-4" id="tap-texas-artmenu-div">
                 <div id="tap-artmenu"></div>
               </div>
-              <div class="col-sm-8">
+              <div class="col-sm-8" id="tap-texas-artmap-div">
                 <div id="tap-texas-artmap" class="w-100 mb-3" style="height: 600px;"></div>
                 <tc-range-slider
                     id="tap-artslider"
@@ -778,15 +794,12 @@ class ArtMap {
         `)
         this.us_tab.html(`
             <div class="row">
-              <div class="col-sm-3" id="tap-us-artmenu-div"></div>
-              <div class="col-sm-9" id="tap-us-artmap">US stuff</div>
+              <div class="col-sm-4" id="tap-us-artmenu-div"></div>
+              <div class="col-sm-8" id="tap-us-artmap-div">
+                <div id="tap-us-artmap" class="w-100 mb-3" style="height: 600px;"></div>
+              </div>
             </div>
         `)
-
-        this.texas_title.addClass('tap-tab')
-        this.texas_title.data('tap-tab', 'texas')
-        this.us_title.addClass('tap-tab')
-        this.us_title.data('tap-tab', 'us')
 
         let sender = this
 
@@ -800,55 +813,149 @@ class ArtMap {
         this.artslider.addEventListener('change', (evt) => {
             clearTimeout(sender.artslider_timer)
             sender.artslider_timer = setTimeout(() => {
-                sender.criteria['r_year'] = `${sender.artslider.value1}to${sender.artslider.value2}`
+                if (sender.artslider.value1 > 1880 || sender.artslider.value2 < 1990) {
+                    sender.criteria['r_year'] = `${sender.artslider.value1}to${sender.artslider.value2}`
+                    sender.artmenu.active_filters['Year'] = {
+                        param: 'r_year',
+                        value: `${sender.artslider.value1} - ${sender.artslider.value2}`
+                    }
+                } else {
+                    delete sender.criteria['r_year']
+                }
+                sender.artmenu.show_active_filters()
                 sender.load_images()
             }, 1000)
         })
 
-        jQuery('.tap-tab').click(function() {
-            let clicked_tab = jQuery(this).data('tap-tab')
+        jQuery('button[data-toggle="tab"]').on('shown.bs.tab', function (event) {
+            sender.active_tab = event.target.id.replace('-tab', '')
+            sender.inactive_tab = event.relatedTarget.id.replace('-tab', '')
 
-            if (sender.current_tab !== clicked_tab) {
-                sender.current_tab = clicked_tab
-                let active_tab = jQuery(`#tap-${sender.current_tab}-artmenu-div`)
-                sender.artmenu.element.detach().appendTo(active_tab)
+            console.log(sender.active_tab)
+
+            let active_tab_menu_div = jQuery(`#tap-${sender.active_tab}-artmenu-div`)
+            let active_tab_map_div = jQuery(`#tap-${sender.active_tab}-artmap-div`)
+            let attribution_div = jQuery(`#tap-artmap-attribution-div`)
+
+            sender.artmenu.element.detach().appendTo(active_tab_menu_div)
+            jQuery(sender.artslider).detach().appendTo(active_tab_map_div)
+            attribution_div.detach().appendTo(active_tab_map_div)
+
+            if (sender.active_tab === 'us' && !sender.us_map_drawn) {
+                setTimeout(function() {
+                    sender.draw_us_map()
+                }, 1000)
+            } else {
+                sender.load_images()
             }
         })
 
         setTimeout(function() {
-            fetch(`${sender.tap.plugin_url}/texas_fixed.json`)
-                .then(response => response.json())
-                .then(texas_shape => {
-                    sender.texas_map = L.map('tap-texas-artmap', { zoomSnap: 0.3 })
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-                        maxZoom: 19,
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://cartodb.com/attributions">CartoDB</a>'
-                    }).addTo(sender.texas_map)
-                    sender.texas_map.fitBounds([
-                        [36.48314061639213,-106.5234375],
-                        [25.90864446329127,-93.603515625]
-                    ], { padding: [20,20] })
+            sender.draw_texas_map()
+        }, 1000)
+    }
 
-                    let texas_poly = L.polygon(texas_shape, {
-                        color: '#d5b09d',
+    draw_texas_map() {
+        let sender = this
+        fetch(`${sender.tap.plugin_url}/texas_fixed.json`)
+            .then(response => response.json())
+            .then(texas_shape => {
+                sender.texas_map = L.map('tap-texas-artmap', {zoomSnap: 0.3})
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://cartodb.com/attributions">CartoDB</a>'
+                }).addTo(sender.texas_map)
+                sender.texas_map.fitBounds([
+                    [36.48314061639213, -106.5234375],
+                    [25.90864446329127, -93.603515625]
+                ], {padding: [20, 20]})
+
+                let texas_poly = L.polygon(texas_shape, {
+                    color: '#d5b09d',
+                    fill: true,
+                    fillOpacity: 1,
+                    interactive: false
+                })
+                texas_poly.addTo(sender.texas_map)
+                texas_poly.bringToFront()
+
+                jQuery('.leaflet-control-attribution').detach().appendTo(jQuery('#tap-artmap-attribution-div'))
+
+                sender.artmenu = new ArtMenu(sender.tap, jQuery('#tap-artmenu'), sender, 'Search', false, false)
+                sender.load_images()
+
+                sender.popup = L.popup({maxHeight: 300})
+                sender.texas_map.on('popupclose', e => {
+                    sender.texas_map.flyTo(sender.locations[sender.current_location].coordinates)
+                })
+            }
+        )
+    }
+
+    draw_us_map() {
+        let sender = this
+        fetch(`${sender.tap.plugin_url}/usa.json`)
+            .then(response => response.json())
+            .then(usa_shapes => {
+                sender.us_map = L.map('tap-us-artmap', { zoomSnap: 0.3 })
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://cartodb.com/attributions">CartoDB</a>'
+                }).addTo(sender.us_map)
+
+                sender.us_map.fitBounds([
+                    [49.12081854517537,-125.84908980237064],
+                    [24.581804314541866,-65.87274522302415]
+                ], { padding: [20,20] })
+
+                let state_markers = new L.FeatureGroup()
+
+                usa_shapes.forEach(state_shape => {
+                    let state_poly = L.geoJSON(state_shape, {
+                        fillColor: '#A5B9C4',
                         fill: true,
                         fillOpacity: 1,
+                        color: '#FFFFFF',
+                        weight: 1,
                         interactive: false
                     })
-                    texas_poly.addTo(sender.texas_map)
-                    texas_poly.bringToFront()
+                    state_poly.addTo(sender.us_map)
+                    state_poly.bringToFront()
 
-                    jQuery('.leaflet-control-attribution').detach().appendTo(jQuery('#tap-artmap-attribution-div'))
+                    if (state_shape.properties.abbreviation) {
+                        let state_center = state_poly.getBounds().getCenter()
+                        if (state_shape.properties.label_coords) state_center = state_shape.properties.label_coords
 
-                    sender.artmenu = new ArtMenu(sender.tap, jQuery('#tap-artmenu'), sender, 'Search', false, false)
-                    sender.load_images()
-
-                    sender.popup = L.popup({maxHeight: 300})
-                    sender.texas_map.on('popupclose', e => {
-                        sender.texas_map.flyTo(sender.locations[sender.current_location].coordinates)
-                    })
+                        let marker = new L.Marker(
+                            state_center,
+                            {
+                                icon: new L.DivIcon({
+                                    className: 'tap-artmap-marker',
+                                    iconSize: [20, 20],
+                                    iconAnchor: [10, 10],
+                                    html: `
+                                    <span class="tap-artmap-state-abbreviation">
+                                      ${state_shape.properties.abbreviation}
+                                    </span>
+                                `
+                                })
+                            }
+                        )
+                        state_markers.addLayer(marker)
+                    }
                 })
-        }, 1000)
+
+                sender.us_map.on('popupclose', e => {
+                    sender.us_map.flyTo(sender.locations[sender.current_location].coordinates)
+                })
+                sender.us_map_drawn = true
+
+                sender.us_map.on('zoomend', function(e) {
+                    if (sender.us_map.getZoom() < 5) sender.us_map.removeLayer(state_markers)
+                    else sender.us_map.addLayer(state_markers)
+                })
+            }
+        )
     }
 
     load_images(reset=true) {
@@ -857,7 +964,7 @@ class ArtMap {
         Object.keys(sender.locations).forEach(loc_id => {
             sender.locations[loc_id].artworks = []
         })
-        if (sender.texas_cluster) sender.texas_cluster.remove()
+        if (sender.marker_cluster) sender.marker_cluster.remove()
 
         this.tap.make_request(
             `/api/corpus/${sender.tap.corpus_id}/ArtWork/`,
@@ -868,17 +975,20 @@ class ArtMap {
                     artworks.records.forEach(artwork => {
                         if (!(artwork.id in sender.metadata)) sender.metadata[artwork.id] = Object.assign({}, artwork)
 
-                        if (artwork.location) {
+                        if (artwork.location && artwork.location.coordinates.length) {
                             if (!(artwork.location.id in sender.locations)) {
                                 sender.locations[artwork.location.id] = Object.assign({marker: null}, artwork.location)
+                                sender.locations[artwork.location.id].coordinates = [sender.locations[artwork.location.id].coordinates[1], sender.locations[artwork.location.id].coordinates[0]]
                                 sender.locations[artwork.location.id].artworks = []
                             }
-                            relevant_locations.push(artwork.location.id)
-                            sender.locations[artwork.location.id].artworks.push(artwork.id)
+                            if (sender.active_tab === 'us' || (sender.active_tab === 'texas' && artwork.location.state === 'Texas')) {
+                                if (!relevant_locations.includes(artwork.location.id))  relevant_locations.push(artwork.location.id)
+                                sender.locations[artwork.location.id].artworks.push(artwork.id)
+                            }
                         }
                     })
 
-                    sender.texas_cluster = L.markerClusterGroup({
+                    sender.marker_cluster = L.markerClusterGroup({
                         iconCreateFunction: cluster => {
                             let size = cluster.getChildCount()
                             return L.divIcon({
@@ -911,41 +1021,41 @@ class ArtMap {
                     relevant_locations.forEach(location_id => {
                         let loc = sender.locations[location_id]
                         if (loc.coordinates) {
-                            if (!loc.marker) {
-                                loc.coordinates = [loc.coordinates[1], loc.coordinates[0]]
-                                loc.marker = new L.Marker(
-                                    loc.coordinates,
-                                    {
-                                        icon: new L.DivIcon({
-                                            className: 'tap-artmap-marker',
-                                            iconSize: [100, 20],
-                                            iconAnchor: [0, 0],
-                                            html: `
-                                                <svg height="20" width="20">
-                                                  <circle
-                                                    class="tap-artmap-marker-circle"
-                                                    cx="10"
-                                                    cy="10"
-                                                    r="8"
-                                                    fill="white"
-                                                    stroke="white"
-                                                    stroke-width="1" />
-                                                </svg>
-                                                <span class="tap-artmap-marker-label">
-                                                  ${loc.name}
-                                                </span>
-                                            `
-                                        })
-                                    }
-                                )
-                                loc.marker.on('click', function (e) {
-                                    sender.display_metadata(location_id)
-                                })
-                            }
-                            sender.texas_cluster.addLayer(loc.marker)
+                            let marker = new L.Marker(
+                                loc.coordinates,
+                                {
+                                    icon: new L.DivIcon({
+                                        className: 'tap-artmap-marker',
+                                        iconSize: [100, 20],
+                                        iconAnchor: [0, 0],
+                                        html: `
+                                        <svg height="20" width="20">
+                                          <circle
+                                            class="tap-artmap-marker-circle"
+                                            cx="10"
+                                            cy="10"
+                                            r="8"
+                                            fill="white"
+                                            stroke="white"
+                                            stroke-width="1" />
+                                        </svg>
+                                        <span class="tap-artmap-marker-label">
+                                          ${loc.name}
+                                        </span>
+                                    `
+                                    })
+                                }
+                            )
+                            marker.on('click', function (e) {
+                                sender.display_metadata(location_id)
+                            })
+                            sender.marker_cluster.addLayer(marker)
                         }
                     })
-                    sender.texas_map.addLayer(sender.texas_cluster)
+                    if (sender.active_tab === 'texas')
+                        sender.texas_map.addLayer(sender.marker_cluster)
+                    else
+                        sender.us_map.addLayer(sender.marker_cluster)
                 }
             }
         )
@@ -1005,10 +1115,14 @@ class ArtMap {
         })
 
         meta += `</div>`
+
+        let active_map = sender.texas_map
+        if (sender.active_tab === 'us') active_map = sender.us_map
+
         sender.popup
             .setLatLng(sender.locations[location_id].coordinates)
             .setContent(meta)
-            .openOn(sender.texas_map)
+            .openOn(active_map)
 
         let popup_metadata_pane = jQuery(`#tap-artmap-metadata-popup`)
         sender.locations[location_id].artworks.forEach(artwork_id => {
@@ -1108,8 +1222,8 @@ class ArtDetail {
                             prefixUrl:          `${sender.tap.plugin_url}/js/openseadragon/images/`,
                             preserveViewport:   false,
                             visibilityRatio:    1,
-                            minZoomLevel:       .25,
-                            maxZoomLevel:       5,
+                            minZoomLevel:       .50,
+                            maxZoomLevel:       15,
                             defaultZoomLevel:   0,
                             //homeFillsViewer:    true,
                             showRotationControl: true,
