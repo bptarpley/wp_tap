@@ -897,10 +897,9 @@ class ArtMap {
         fetch(`${sender.tap.plugin_url}/usa.json`)
             .then(response => response.json())
             .then(usa_shapes => {
-                sender.us_map = L.map('tap-us-artmap', { zoomSnap: 0.3 })
+                sender.us_map = L.map('tap-us-artmap', { zoomSnap: 0.3, attributionControl: false })
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19,
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://cartodb.com/attributions">CartoDB</a>'
+                    maxZoom: 19
                 }).addTo(sender.us_map)
 
                 sender.us_map.fitBounds([
