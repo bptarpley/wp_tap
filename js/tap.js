@@ -504,7 +504,7 @@ class ArtMenu {
             origin: {
                 params: { a_terms_origin: "location.id,location.label.raw" },
                 field_name: "location",
-                filter_label: "Origin",
+                filter_label: "Depicted Place",
                 parser: generic_xref_parser
             },
             collection: {
@@ -1181,7 +1181,7 @@ class ArtDetail {
                           ${meta.alt_title ? `<dt>Alternate Title</dt><dd>${meta.alt_title}</dd>` : ''}
                           <dt>Creator:</dt><dd>${meta.artists[0].label}</dd>
                           <dt>Year:</dt><dd>${meta.year}</dd>
-                          ${meta.location ? `<dt>Origin:</dt><dd><a href="/?location=${meta.location.id}">${meta.location.label}</a></dd>` : ''}
+                          ${meta.location ? `<dt>Depicted Place:</dt><dd><a href="/?location=${meta.location.id}">${meta.location.label}</a></dd>` : ''}
                           ${meta.edition ? `<dt>Edition</dt><dd>${meta.edition}</dd>` : ''}
                           ${tags.join('\n')}
                           <dt>Medium:</dt><dd><a href="/?medium=${meta.medium}">${meta.medium}</a></dd>
