@@ -16,6 +16,10 @@ body {
     padding-left: 20px;
 }
 
+.bg-light {
+    background-color: #FFFFFF!important;
+}
+
 .navbar-brand {
     text-decoration: none!important;
 }
@@ -26,6 +30,7 @@ body {
     font-size: 20px;
     margin-left: 40px;
     text-decoration: none!important;
+    white-space: nowrap;
 }
 
 .dropdown-menu {
@@ -206,6 +211,11 @@ dd.below {
 .tap-menu-heading {
     font-style: normal!important;
     margin-bottom: 5px;
+}
+
+.tap-artmenu-list-item {
+    padding-left: 1em;
+    text-indent: -1em;
 }
 
 .tap-artmenu-active-filter {

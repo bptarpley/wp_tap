@@ -116,23 +116,26 @@ class TexasArtProject {
         let width = size
         let height = size
 
-        if (img.data('display-restriction') === 'Thumbnail Only' && !region_only) {
-            region_only = true
-            width = 200
-            height = 200
-        }
+        if (img.data('display-restriction') !== 'No Image') {
 
-        if (region_only) {
-            iiif_src = `${img.data('iiif-identifier')}/${img.data('region')}/${size},${size}/0/default.png`
-        } else {
-            if (width > img.data('fullwidth')) width = img.data('fullwidth')
-            iiif_src = `${img.data('iiif-identifier')}/full/${width},/0/default.png`
-            let ratio = width / img.data('fullwidth')
-            height = parseInt(ratio * img.data('fullheight'))
-            img.css('filter', 'brightness(2)')
-            img.on('load', function() {
-                img.css('filter', 'brightness(1.1)')
-            })
+            if (img.data('display-restriction') === 'Thumbnail Only' && !region_only) {
+                region_only = true
+                width = 200
+                height = 200
+            }
+
+            if (region_only) {
+                iiif_src = `${img.data('iiif-identifier')}/${img.data('region')}/${size},${size}/0/default.png`
+            } else {
+                if (width > img.data('fullwidth')) width = img.data('fullwidth')
+                iiif_src = `${img.data('iiif-identifier')}/full/${width},/0/default.png`
+                let ratio = width / img.data('fullwidth')
+                height = parseInt(ratio * img.data('fullheight'))
+                img.css('filter', 'brightness(2)')
+                img.on('load', function () {
+                    img.css('filter', 'brightness(1.1)')
+                })
+            }
         }
 
         img.attr('src', iiif_src)
@@ -150,7 +153,7 @@ class SiteHeader {
         jQuery('head').append(`<link rel="stylesheet" href="https://use.typekit.net/qbi7knm.css">`)
 
         this.element.html(`
-            <nav class="navbar navbar-expand-md navbar-light bg-light">
+            <nav class="navbar navbar-expand-md navbar-light bg-light" style="background-color: #FFFFFF!important;">
               <a class="navbar-brand" href="#">Texas Art Project</a>
               <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#tap-navbar" aria-controls="tap-navbar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -304,20 +307,17 @@ class ArtGrid {
               <div class="tap-artgrid-metadata">
                 <h1>${meta.title}</h1>
                 <div class="row">
-                  <div class="col-md-4">
+                  <div class="col-md-6">
                     <dl>
                       <dt>Year:</dt><dd>${meta.year}</dd>
-                      ${meta.location ? `<dt>Origin:</dt><dd>${meta.location.label}</dd>` : ''}
-                      ${tags.join('\n')}
-                      <dt>Surface:</dt><dd>${meta.surface}</dd>
                       <dt>Medium:</dt><dd>${meta.medium}</dd>
-                      <dt>Size:</dt><dd>${meta.size_inches}</dd>
-                      ${meta.collection ? `<dt>Collection:</dt><dd>${meta.collection.label}</dd>` : ''}
+                      <dt>Surface:</dt><dd>${meta.surface}</dd>
                     </dl>
                   </div>
-                  <div class="col-md-8 d-flex flex-column">
+                  <div class="col-md-6 d-flex flex-column">
                     <dl style="flex: 1;">
-                      <dt>Caption:</dt><dd>${meta.caption ? meta.caption : 'None'}</dd>
+                      ${meta.collection && !meta.anonymize_collector ? `<dt>Collection:</dt><dd>${meta.collection.label}</dd>` : ''}
+                      <dt>Size:</dt><dd>${meta.size_inches}</dd>
                     </dl>
                     <div class="w-100">
                       <a class="float-right" href="/artwork/${meta.id}/" target="_blank">See more...</a>
@@ -411,14 +411,14 @@ class ArtMenu {
             
             ${show_year ? `
             <details class="tap-artmenu-list">
-              <summary>Year</summary>
+              <summary>Decade</summary>
               <ul id="tap-artmenu-decade-list"></ul>
             </details>
             ` : '' }
             
             ${show_origin ? `
             <details class="tap-artmenu-list">
-              <summary>Origin</summary>
+              <summary>Depicted Place</summary>
               <ul id="tap-artmenu-origin-list"></ul>
             </details>
             ` : '' }
@@ -495,7 +495,7 @@ class ArtMenu {
                 filter_label: 'Year',
                 parser: function(key, field_name) {
                     return {
-                        label: parseInt(key),
+                        label: `${parseInt(key)}s`,
                         search_param: `r_year`,
                         search_value: `${parseInt(key)}to${parseInt(key) + 9}`
                     }
@@ -508,7 +508,7 @@ class ArtMenu {
                 parser: generic_xref_parser
             },
             collection: {
-                params: { a_terms_collection: "collection.id,collection.label.raw" },
+                params: { a_terms_collection: "collection.id,collection.label.raw", 'f_anonymize_collector-': 'true' },
                 field_name: "collection",
                 filter_label: "Collection",
                 parser: generic_xref_parser
@@ -1107,12 +1107,10 @@ class ArtMap {
                       />
                       <dl>
                         <dt>Year:</dt><dd>${artwork.year}</dd>
-                        ${artwork.location ? `<dt>Origin:</dt><dd>${artwork.location.label}</dd>` : ''}
-                        ${tags.join('\n')}
-                        <dt>Surface:</dt><dd>${artwork.surface}</dd>
+                        ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
                         <dt>Medium:</dt><dd>${artwork.medium}</dd>
+                        <dt>Surface:</dt><dd>${artwork.surface}</dd>
                         <dt>Size:</dt><dd>${artwork.size_inches}</dd>
-                        ${artwork.collection ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
                       </dl>
                       <a class="mt-2" href="/artwork/${artwork.id}/" target="_blank">See more...</a>
                     </div>
@@ -1186,16 +1184,16 @@ class ArtDetail {
                           ${meta.location ? `<dt>Origin:</dt><dd><a href="/?location=${meta.location.id}">${meta.location.label}</a></dd>` : ''}
                           ${meta.edition ? `<dt>Edition</dt><dd>${meta.edition}</dd>` : ''}
                           ${tags.join('\n')}
-                          <dt>Surface:</dt><dd><a href="/?surface=${meta.surface}">${meta.surface}</a></dd>
                           <dt>Medium:</dt><dd><a href="/?medium=${meta.medium}">${meta.medium}</a></dd>
+                          <dt>Surface:</dt><dd><a href="/?surface=${meta.surface}">${meta.surface}</a></dd>
                           <dt>Size:</dt><dd>${meta.size_inches}</dd>
                           ${meta.inscriptions ? `<dt>Inscriptions</dt><dd>${meta.inscriptions}</dd>` : ''}
-                          ${meta.collection ? `<dt>Collection:</dt><dd><a href="/?collection=${meta.collection.id}">${meta.collection.label}</a></dd>` : ''}
+                          ${meta.collection && !meta.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?collection=${meta.collection.id}">${meta.collection.label}</a></dd>` : ''}
                         </dl>
                       </div>
                     `)
 
-                    if (meta.display_restriction && meta.display_restriction.label === 'Thumbnail Only') {
+                    if (meta.display_restriction && ['Thumbnail Only', 'No Image'].includes(meta.display_restriction.label)) {
                         let art_region = null
                         if (meta.hasOwnProperty('featured_region_x') && meta.featured_region_x) {
                             art_region = `${meta.featured_region_x},${meta.featured_region_y},${meta.featured_region_width},${meta.featured_region_width}`;
