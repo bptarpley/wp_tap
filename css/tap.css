@@ -11,11 +11,16 @@ body {
     background-color: #FFFFFF!important;
 }
 
-#tap-nav-div {
-    padding: 20px;
+.navbar {
+    padding: 0;
+    padding-left: 20px;
 }
 
-#tap-nav-div a {
+.navbar-brand {
+    text-decoration: none!important;
+}
+
+.navbar-nav .nav-link, .dropdown-item {
     color: #000000;
     font-style: italic;
     font-size: 20px;
@@ -23,7 +28,19 @@ body {
     text-decoration: none!important;
 }
 
-#tap-nav-div a:hover, #tap-nav-div a.active {
+.dropdown-menu {
+    margin-left: 40px!important;
+}
+
+.dropdown-menu > b {
+    margin-left: 10px;
+}
+
+.dropdown-item {
+    margin-left: 10px;
+}
+
+#tap-navbar a:hover, #tap-nav-div a.active {
     color: #008dab!important;
     text-decoration: underline!important;
     text-underline-offset: 10px!important;

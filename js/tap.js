@@ -149,31 +149,39 @@ class SiteHeader {
 
         jQuery('head').append(`<link rel="stylesheet" href="https://use.typekit.net/qbi7knm.css">`)
 
-        const top_navs = [
-            {path: '/', name: "Home"},
-            {path: '/about/', name: "About Us"},
-            {path: '/artists/', name: "Featured Artists"},
-            {path: '/contact/', name: "Contact Us"}
-        ]
-        let nav_links = top_navs.map(nav => `<a href="${nav.path}"${nav.path === this.tap.path ? ' class="active"' : ''}>${nav.name}</a>`)
-
-        this.element.append(`
-            <div id="tap-nav-div" class="d-flex flex-grow-1 justify-content-end">
-                ${nav_links.join("\n\t")}
-            </div>
+        this.element.html(`
+            <nav class="navbar navbar-expand-md navbar-light bg-light">
+              <a class="navbar-brand" href="#">Texas Art Project</a>
+              <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#tap-navbar" aria-controls="tap-navbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse" id="tap-navbar">
+                <ul class="navbar-nav ml-auto">
+                  <li class="nav-item active">
+                    <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/about/">About Us</a>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
+                      Featured Artists
+                    </a>
+                    <div class="dropdown-menu bg-light">
+                      <b>Buck Schiwetz</b>
+                      <hr class="dropdown-divider">
+                      <a class="dropdown-item" href="/essay/">Introductory Essay</a>
+                      <a class="dropdown-item" href="/">Gallery</a>
+                      <a class="dropdown-item" href="/map/">Map and Timeline</a>
+                    </div>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/contact/">Contact Us</a>
+                  </li>
+                </ul>
+              </div>
+            </nav>
         `)
-
-        //jQuery('.dropdown-toggle').dropdown()
-        let search_bar = jQuery('.clo-search-bar')
-        search_bar.keyup(function(e) {
-            if (e.key === "Enter") {
-                console.log('enter event fired')
-                let query = search_bar.val().trim()
-                if (query) {
-                    window.location.href = `/search-results/${query}`
-                }
-            }
-        })
     }
 }
 
@@ -186,7 +194,7 @@ class HeaderImage {
                 src: `${this.tap.plugin_url}/img/home-collage.png`,
                 alt: "The Texas Art Project"
             },
-            '/about/': {
+            '/essay/': {
                 src: `${this.tap.plugin_url}/img/about-heading.png`,
                 alt: "About the Texas Art Project"
             },
