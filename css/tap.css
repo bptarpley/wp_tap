@@ -11,6 +11,10 @@ body {
     background-color: #FFFFFF!important;
 }
 
+p {
+    font-size: 18px;
+}
+
 .navbar {
     padding: 0;
     padding-left: 20px;
