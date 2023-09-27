@@ -372,3 +372,40 @@ button.nav-link:focus {
 #tap-artdetail-metadata-div dl {
     grid-template-columns: 20% auto;
 }
+
+#tap-footer-div {
+    padding: 10px;
+    background-color: #008DAB;
+    color: #FFFFFF;
+    font-size: 14px;
+}
+
+#tap-footer-row {
+    flex-direction: row;
+}
+
+.tap-footer-cell {
+    margin-left: 10px;
+}
+
+.tap-footer-cell:first-child {
+    margin-left: 0px;
+    border-left: none;
+}
+
+a.tap-footer-link, a.tap-footer-link:hover {
+    color: #FFFFFF!important;
+}
+
+@media (max-width: 767px) {
+    #tap-footer-row {
+        flex-direction: column;
+    }
+
+    .tap-footer-cell, .tap-footer-cell:first-child {
+        border-left: none;
+        margin-bottom: 20px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}

@@ -8,11 +8,11 @@ class TexasArtProject {
         this.plugin_url = plugin_url
         this.site_header = null
         this.header_image = null
-        this.site_footer = null
         this.artgrid = null
         this.artmenu = null
         this.artmap = null
         this.artdetail = null
+        this.artfooter = null
 
         // SITE HEADER
         //let tap_site_header = jQuery('#tap-header-div>.elementor-container>.elementor-column>.elementor-widget-wrap')
@@ -55,21 +55,8 @@ class TexasArtProject {
         // rig up the site footer
         let tap_site_footer_div = jQuery('#tap-footer-div')
         if (tap_site_footer_div.length) {
-            this.site_footer = new SiteFooter(this, tap_site_footer_div)
+            this.artfooter = new ArtFooter(this, tap_site_footer_div)
         }
-
-        // rig up homepage widget
-        let tap_homepage_widget_div = jQuery('#tap-homepage-widget-div')
-        if (tap_homepage_widget_div.length) {
-            this.homepage_widget = new HomePageWidget(this, tap_homepage_widget_div)
-        }
-
-        // rig up album viewer
-        let tap_artwork_div = jQuery('#tap-artwork-div')
-        if (tap_artwork_div.length) {
-            this.artwork_widget = new ArtworkViewer(this, tap_artwork_div)
-        }
-        
     }
 
     make_request(path, type, params={}, callback, inject_host=true) {
@@ -1421,5 +1408,31 @@ class ArtDetail {
                 }
             )
         }
+    }
+}
+
+
+class ArtFooter {
+    constructor(tap_instance, element) {
+        this.tap = tap_instance
+        this.element = element
+
+        this.element.html(`
+            <div id="tap-footer-row" class="d-flex flex-wrap">
+              <div class="tap-footer-cell">
+                Texas Art Project © <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="tap-footer-link" target="_blank">CC BY-NC-SA 4.0</a>
+              </div>
+              <div class="tap-footer-cell">
+                <img src="http://liberalarts.tamu.edu/codhr/wp-content/uploads/sites/34/2023/07/Logo-white-bg-left-align.png"
+                  style="height: 50px; width: auto; background-color: #FFFFFF; padding: 5px;"
+                  alt="The Center of Digital Humanities Research at Texas A&M University" />
+              </div>
+              <div class="tap-footer-cell">
+                <img src="https://tamupvfa.b-cdn.net/app/uploads/2022/06/PVFA-logo-Maroon-Horizontal.png"
+                  style="height: 50px; width: auto; background-color: #FFFFFF; padding: 5px; padding-right: 17px;"
+                  alt="The Center of Digital Humanities Research at Texas A&M University" />
+              </div>
+            </div>
+        `)
     }
 }
