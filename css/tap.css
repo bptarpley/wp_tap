@@ -213,9 +213,15 @@ dd.below {
     margin-bottom: 5px;
 }
 
+.tap-artmenu-list[open] > summary {
+    margin-bottom: 5px;
+}
+
 .tap-artmenu-list-item {
     padding-left: 1em;
     text-indent: -1em;
+    font-size: smaller;
+    margin-bottom: 5px;
 }
 
 .tap-artmenu-active-filter {
