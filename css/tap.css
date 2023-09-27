@@ -294,6 +294,11 @@ details ul li:hover {
     color: #FFFFFF;
 }
 
+.tap-artmap-exhibit-marker {
+    width: 20px;
+    height: 30px;
+}
+
 .nav-tabs .nav-link {
     border: none!important;
     border-top-left-radius: 0!important;
@@ -340,6 +345,10 @@ button.nav-link:focus {
 
 .tap-artmap-marker, .tap-artmap-marker-label {
     white-space: nowrap;
+}
+
+.tap-artmap-marker-label.legend {
+    font-size: 12px;
 }
 
 .tap-artmap-marker:hover .tap-artmap-marker-circle, .tap-artmap-cluster:hover .tap-artmap-marker-circle {

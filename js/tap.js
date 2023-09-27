@@ -747,6 +747,8 @@ class ArtMap {
         this.criteria = {'page-size': 150, 'page': 1, 'f_location.country': 'United States'}
         this.metadata = {}
         this.locations = {}
+        this.exhibits = {}
+        this.artwork_exhibit_map = {}
 
         this.element.html(`
             <ul class="nav nav-tabs" id="tap-artmap-tabs" role="tablist">
@@ -756,6 +758,30 @@ class ArtMap {
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="us-tab" data-toggle="tab" data-target="#us" type="button" role="tab" aria-controls="us" aria-selected="false">United States</button>
                 </li>
+                <li class="ml-auto">
+                  <span class="mr-3">
+                    <svg height="20" width="20">
+                      <circle
+                        class="tap-artmap-marker-circle"
+                        cx="10"
+                        cy="10"
+                        r="8"
+                        fill="white"
+                        stroke="white"
+                        stroke-width="1" />
+                    </svg>
+                    <span class="tap-artmap-marker-label legend">
+                      Depicted Place
+                    </span>
+                  </span>
+                  <span>
+                    <img src="${this.tap.plugin_url}/img/museum.svg" style="height: 20px; width: 20px;">
+                    <span class="tap-artmap-marker-label legend">
+                      Exhibit
+                    </span>
+                  </span>
+                </li>
+                
             </ul>
             <div class="tab-content" id="tap-artmap-content">
                 <div class="tab-pane fade show active" id="texas" role="tabpanel" aria-labelledby="texas-tab">Texas</div>
@@ -767,16 +793,17 @@ class ArtMap {
         this.texas_map = null
 
         this.marker_cluster = null
+        this.exhibit_cluster = null
 
         this.us_tab = jQuery('#us')
         this.us_map = null
         this.us_map_drawn = false
 
         this.active_tab = 'texas'
-        this.inactive_tab = 'us'
         this.current_location = null
 
-        this.popup = null
+        this.marker_popup = null
+        this.exhibit_popup = null
 
         this.texas_tab.html(`
             <div class="row">
@@ -842,9 +869,6 @@ class ArtMap {
 
         jQuery('button[data-toggle="tab"]').on('shown.bs.tab', function (event) {
             sender.active_tab = event.target.id.replace('-tab', '')
-            sender.inactive_tab = event.relatedTarget.id.replace('-tab', '')
-
-            console.log(sender.active_tab)
 
             let active_tab_menu_div = jQuery(`#tap-${sender.active_tab}-artmenu-div`)
             let active_tab_map_div = jQuery(`#tap-${sender.active_tab}-artmap-div`)
@@ -895,12 +919,47 @@ class ArtMap {
                 jQuery('.leaflet-control-attribution').detach().appendTo(jQuery('#tap-artmap-attribution-div'))
 
                 sender.artmenu = new ArtMenu(sender.tap, jQuery('#tap-artmenu'), sender, 'Search', false, false)
-                sender.load_images()
 
-                sender.popup = L.popup({maxHeight: 300})
+                sender.marker_popup = L.popup({maxHeight: 300})
+                sender.exhibit_popup = L.popup({maxHeight: 300})
                 sender.texas_map.on('popupclose', e => {
                     sender.texas_map.flyTo(sender.locations[sender.current_location].coordinates)
                 })
+
+                sender.tap.make_request(
+                    `/api/corpus/${sender.tap.corpus_id}/Exhibit/`,
+                    'GET',
+                    {'page-size': 500},
+                    function(exhibits) {
+                        if (exhibits.records) {
+                            exhibits.records.forEach(exhibit => {
+                                if (exhibit.location && exhibit.location.coordinates) {
+                                    sender.exhibits[exhibit.id] = Object.assign({artworks: []}, exhibit)
+                                    sender.exhibits[exhibit.id].location.coordinates = [sender.exhibits[exhibit.id].location.coordinates[1], sender.exhibits[exhibit.id].location.coordinates[0]]
+                                    sender.locations[sender.exhibits[exhibit.id].location.id] = Object.assign({artworks: []}, sender.exhibits[exhibit.id].location)
+                                }
+                            })
+
+                            sender.tap.make_request(
+                                `/api/corpus/${sender.tap.corpus_id}/Exhibition/`,
+                                'GET',
+                                {'page-size': 1000, 'only': 'exhibit.id,artwork.id'},
+                                function(exhibitions) {
+                                    if (exhibitions.records) {
+                                        exhibitions.records.forEach(exhibition => {
+                                            if (!(exhibition.artwork.id in sender.artwork_exhibit_map)) {
+                                                sender.artwork_exhibit_map[exhibition.artwork.id] = []
+                                            }
+                                            sender.artwork_exhibit_map[exhibition.artwork.id].push(exhibition.exhibit.id)
+                                        })
+                                    }
+
+                                    sender.load_images()
+                                }
+                            )
+                        }
+                    }
+                )
             }
         )
     }
@@ -976,25 +1035,29 @@ class ArtMap {
         Object.keys(sender.locations).forEach(loc_id => {
             sender.locations[loc_id].artworks = []
         })
+        Object.keys(sender.exhibits).forEach(exhibit_id => {
+            sender.exhibits[exhibit_id].artworks = []
+        })
         if (sender.marker_cluster) sender.marker_cluster.remove()
+        if (sender.exhibit_cluster) sender.exhibit_cluster.remove()
 
         this.tap.make_request(
             `/api/corpus/${sender.tap.corpus_id}/ArtWork/`,
             'GET',
             sender.criteria,
-            function(artworks) {
+            function (artworks) {
                 if (artworks.records) {
                     artworks.records.forEach(artwork => {
                         if (!(artwork.id in sender.metadata)) sender.metadata[artwork.id] = Object.assign({}, artwork)
 
                         if (artwork.location && artwork.location.coordinates.length) {
                             if (!(artwork.location.id in sender.locations)) {
-                                sender.locations[artwork.location.id] = Object.assign({marker: null}, artwork.location)
+                                sender.locations[artwork.location.id] = Object.assign({}, artwork.location)
                                 sender.locations[artwork.location.id].coordinates = [sender.locations[artwork.location.id].coordinates[1], sender.locations[artwork.location.id].coordinates[0]]
                                 sender.locations[artwork.location.id].artworks = []
                             }
                             if (sender.active_tab === 'us' || (sender.active_tab === 'texas' && artwork.location.state === 'Texas')) {
-                                if (!relevant_locations.includes(artwork.location.id))  relevant_locations.push(artwork.location.id)
+                                if (!relevant_locations.includes(artwork.location.id)) relevant_locations.push(artwork.location.id)
                                 sender.locations[artwork.location.id].artworks.push(artwork.id)
                             }
                         }
@@ -1062,12 +1125,44 @@ class ArtMap {
                                 sender.display_metadata(location_id)
                             })
                             sender.marker_cluster.addLayer(marker)
+
+                            loc.artworks.forEach(artwork_id => {
+                                if (artwork_id in sender.artwork_exhibit_map) {
+                                    sender.artwork_exhibit_map[artwork_id].forEach(exhibit_id => {
+                                        if (exhibit_id in sender.exhibits) {
+                                            sender.exhibits[exhibit_id].artworks.push(artwork_id)
+
+                                            if (sender.exhibits[exhibit_id].artworks.length === 1) {
+                                                let marker = new L.Marker(
+                                                    sender.exhibits[exhibit_id].location.coordinates,
+                                                    {
+                                                        icon: new L.DivIcon({
+                                                            className: 'tap-artmap-marker',
+                                                            iconSize: [30, 44],
+                                                            iconAnchor: [10, 30],
+                                                            html: `
+                                                                <img src="${sender.tap.plugin_url}/img/museum-marker.svg" class="tap-artmap-exhibit-marker">
+                                                            `
+                                                        })
+                                                    }
+                                                )
+                                                marker.bindTooltip(sender.exhibits[exhibit_id].label).openTooltip()
+                                                marker.on('click', function (e) {
+                                                    sender.display_exhibit(exhibit_id)
+                                                })
+                                                sender.marker_cluster.addLayer(marker)
+                                            }
+                                        }
+                                    })
+                                }
+                            })
                         }
                     })
-                    if (sender.active_tab === 'texas')
+                    if (sender.active_tab === 'texas') {
                         sender.texas_map.addLayer(sender.marker_cluster)
-                    else
+                    } else {
                         sender.us_map.addLayer(sender.marker_cluster)
+                    }
                 }
             }
         )
@@ -1129,7 +1224,7 @@ class ArtMap {
         let active_map = sender.texas_map
         if (sender.active_tab === 'us') active_map = sender.us_map
 
-        sender.popup
+        sender.marker_popup
             .setLatLng(sender.locations[location_id].coordinates)
             .setContent(meta)
             .openOn(active_map)
@@ -1141,6 +1236,89 @@ class ArtMap {
                 sender.tap.render_image(img, popup_metadata_pane.width() - 20, false)
             })
         })
+    }
+
+    display_exhibit(exhibit_id) {
+        let sender = this
+
+        if (exhibit_id in sender.exhibits) {
+            let ex = sender.exhibits[exhibit_id]
+            let location_id = ex.location.id
+            let meta = `
+                <h2>${ex.title}</h2>
+                <dl>
+                  ${ex.year ? `<dt>Year:</dt><dd>${ex.year}</dd>`: ''}
+                  <dt>Location:</dt><dd>${ex.location.label}</dd>
+                </dl>
+            `
+
+            meta += `<div class="accordion" id="tap-artmap-metadata-popup">`
+            sender.current_location = location_id
+
+            ex.artworks.forEach((artwork_id, i) => {
+                let artwork = sender.metadata[artwork_id]
+                let art_region = null
+                if (artwork.hasOwnProperty('featured_region_x') && artwork.featured_region_x) {
+                    art_region = `${artwork.featured_region_x},${artwork.featured_region_y},${artwork.featured_region_width},${artwork.featured_region_width}`;
+                }
+
+                let tags = []
+                artwork.tags.forEach(tag => {
+                    let [key, value] = tag.label.split(': ')
+                    tags.push(`<dt>${key}:</dt><dd>${value}</dd>`)
+                })
+
+                meta += `
+                    <div class="card">
+                      <div class="tap-card-header" id="heading${i}">
+                          <button class="btn btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse${i}" aria-expanded="${i === 0 ? 'true' : 'false'}" aria-controls="collapse${i}">
+                            ${i + 1}. ${artwork.title}
+                          </button>
+                      </div>
+                    
+                      <div id="collapse${i}" class="collapse${i === 0 ? ' show' : ''}" aria-labelledby="heading${i}" data-parent="#tap-artmap-metadata-popup">
+                        <div class="card-body">
+                          <img
+                            id="tap-artgrid-img-${artwork.id}"
+                            src="${sender.tap.plugin_url + '/img/image-loading.svg'}"
+                            class="tap-artgrid-img img-responsive mb-2"
+                            data-artwork-id="${artwork.id}"
+                            data-iiif-identifier="${artwork.iiif_uri}" 
+                            data-display-restriction="${artwork.display_restriction ? artwork.display_restriction.label : 'none'}"
+                            ${art_region ? `data-region="${art_region}"` : ''}
+                          />
+                          <dl>
+                            <dt>Year:</dt><dd>${artwork.year}</dd>
+                            ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
+                            <dt>Medium:</dt><dd>${artwork.medium}</dd>
+                            <dt>Surface:</dt><dd>${artwork.surface}</dd>
+                            <dt>Size:</dt><dd>${artwork.size_inches}</dd>
+                          </dl>
+                          <a class="mt-2" href="/artwork/${artwork.id}/" target="_blank">See more...</a>
+                        </div>
+                      </div>
+                    </div>
+                `
+            })
+
+            meta += `</div>`
+
+            let active_map = sender.texas_map
+            if (sender.active_tab === 'us') active_map = sender.us_map
+
+            sender.exhibit_popup
+                .setLatLng(ex.location.coordinates)
+                .setContent(meta)
+                .openOn(active_map)
+
+            let popup_metadata_pane = jQuery(`#tap-artmap-metadata-popup`)
+            ex.artworks.forEach(artwork_id => {
+                let img = jQuery(`#tap-artgrid-img-${artwork_id}`)
+                sender.tap.inject_iiif_info(img, function () {
+                    sender.tap.render_image(img, popup_metadata_pane.width() - 20, false)
+                })
+            })
+        }
     }
 }
 
