@@ -382,6 +382,7 @@ button.nav-link:focus {
     background-color: #008DAB;
     color: #FFFFFF;
     font-size: 14px;
+    border-top: solid 5px #BF5180;
 }
 
 #tap-footer-row {
