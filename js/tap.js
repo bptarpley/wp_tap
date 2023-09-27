@@ -217,21 +217,20 @@ class ArtGrid {
         this.cell_width = 200
         this.metadata = {}
 
-        // handle any URL GET params passed in and register them as active filters
+        // handle any URL GET params passed in and register them as an active filter
         this.initial_filter = null
-        let valid_get_params = {
-            collection: 'f_collection.id',
-            location: 'f_location.id',
-            arttag: 'f_tags.id',
-            surface: 'f_surface',
-            medium: 'f_medium'
-        }
-        Object.keys(valid_get_params).forEach(param => {
-            if (this.tap.get_params.has(param)) {
-                this.criteria[valid_get_params[param]] = this.tap.get_params.get(param)
-                this.initial_filter = valid_get_params[param]
+        if (this.tap.get_params.has('filter_label')
+                && this.tap.get_params.has('param')
+                && this.tap.get_params.has('value_label')
+                && this.tap.get_params.has('value')) {
+
+            this.criteria[this.tap.get_params.get('param')] = this.tap.get_params.get('value')
+            this.initial_filter = {
+                filter_label: this.tap.get_params.get('filter_label'),
+                param: this.tap.get_params.get('param'),
+                value_label: this.tap.get_params.get('value_label')
             }
-        })
+        }
 
         let sender = this
         this.observer = new IntersectionObserver((entries) => {
@@ -545,6 +544,18 @@ class ArtMenu {
                                 </li> 
                             `)
                         }
+
+                        if (query === 'collection') {
+                            list.append(`
+                                <li
+                                    class="tap-artmenu-list-item"
+                                    data-filter-label="Collection"
+                                    data-param="f_anonymize_collector"
+                                    data-value="true">
+                                  Private Collection
+                                </li>
+                            `)
+                        }
                     }
                 }
             )
@@ -666,10 +677,18 @@ class ArtMenu {
         // faceting clicks
         jQuery(document).on('click', '.tap-artmenu-list-item', function() {
             let list_item = jQuery(this)
-            sender.grid.criteria[list_item.data('param')] = list_item.data('value')
+            let filter_label = list_item.data('filter-label')
+            let param = list_item.data('param')
+            let value = list_item.data('value')
+
+            if (filter_label in sender.active_filters) {
+                delete sender.grid.criteria[sender.active_filters[filter_label]['param']]
+            }
+
+            sender.grid.criteria[param] = value
             sender.grid.load_images(true)
-            sender.active_filters[list_item.data('filter-label')] = {
-                param: list_item.data('param'),
+            sender.active_filters[filter_label] = {
+                param: param,
                 value: list_item.text()
             }
             sender.show_active_filters()
@@ -695,9 +714,9 @@ class ArtMenu {
 
         // check if grid is already filtered
         if (this.grid.initial_filter) {
-            this.active_filters['Filter'] = {
-                param: this.grid.initial_filter,
-                value: 'from URL'
+            this.active_filters[this.grid.initial_filter.filter_label] = {
+                param: this.grid.initial_filter.param,
+                value: this.grid.initial_filter.value_label
             }
             sender.show_active_filters()
         }
@@ -1340,7 +1359,7 @@ class ArtDetail {
                     let tags = []
                     meta.tags.forEach(tag => {
                         let [key, value] = tag.label.split(': ')
-                        tags.push(`<dt>${key}:</dt><dd><a href="/?arttag=${tag.id}">${value}</a></dd>`)
+                        tags.push(`<dt>${key}:</dt><dd><a href="/?filter_label=${key}&param=f_tags.id&value_label=${value}&value=${tag.id}">${value}</a></dd>`)
                     })
 
                     sender.metadata_div.append(`
@@ -1351,14 +1370,14 @@ class ArtDetail {
                           ${meta.alt_title ? `<dt>Alternate Title</dt><dd>${meta.alt_title}</dd>` : ''}
                           <dt>Creator:</dt><dd>${meta.artists[0].label}</dd>
                           <dt>Year:</dt><dd>${meta.year}</dd>
-                          ${meta.location ? `<dt>Depicted Place:</dt><dd><a href="/?location=${meta.location.id}">${meta.location.label}</a></dd>` : ''}
+                          ${meta.location ? `<dt>Depicted Place:</dt><dd><a href="/?filter_label=Depicted Place&param=f_location.id&value_label=${meta.location.label}&value=${meta.location.id}">${meta.location.label}</a></dd>` : ''}
                           ${meta.edition ? `<dt>Edition</dt><dd>${meta.edition}</dd>` : ''}
                           ${tags.join('\n')}
-                          <dt>Medium:</dt><dd><a href="/?medium=${meta.medium}">${meta.medium}</a></dd>
-                          <dt>Surface:</dt><dd><a href="/?surface=${meta.surface}">${meta.surface}</a></dd>
+                          <dt>Medium:</dt><dd><a href="/?filter_label=Medium&param=f_medium&value_label=${meta.medium}&value=${meta.medium}">${meta.medium}</a></dd>
+                          <dt>Surface:</dt><dd><a href="/?filter_label=Surface&param=f_surface&value_label=${meta.surface}&value=${meta.surface}">${meta.surface}</a></dd>
                           <dt>Size:</dt><dd>${meta.size_inches}</dd>
                           ${meta.inscriptions ? `<dt>Inscriptions</dt><dd>${meta.inscriptions}</dd>` : ''}
-                          ${meta.collection && !meta.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?collection=${meta.collection.id}">${meta.collection.label}</a></dd>` : ''}
+                          ${meta.collection && !meta.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_collection.id&value_label=${meta.collection.label}&value=${meta.collection.id}">${meta.collection.label}</a></dd>` : ''}
                         </dl>
                       </div>
                     `)
