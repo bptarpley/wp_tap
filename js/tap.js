@@ -189,9 +189,17 @@ class HeaderImage {
                 src: `${this.tap.plugin_url}/img/home-collage.png`,
                 alt: "The Texas Art Project"
             },
+            '/about/': {
+                src: `${this.tap.plugin_url}/img/about-heading.png`,
+                alt: "I hope to leave behind me a collection of indigenous paintings which will faithfully portray Texas as it is. - Buck Schiwetz"
+            },
+            '/contact/': {
+                src: `${this.tap.plugin_url}/img/about-heading.png`,
+                alt: "I hope to leave behind me a collection of indigenous paintings which will faithfully portray Texas as it is. - Buck Schiwetz"
+            },
             '/essay/': {
                 src: `${this.tap.plugin_url}/img/about-heading.png`,
-                alt: "About the Texas Art Project"
+                alt: "I hope to leave behind me a collection of indigenous paintings which will faithfully portray Texas as it is. - Buck Schiwetz"
             },
             '/map/': {
                 src: `${this.tap.plugin_url}/img/map-timeline.png`,
