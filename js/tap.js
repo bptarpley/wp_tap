@@ -116,8 +116,13 @@ class TexasArtProject {
         let width = size
         let height = size
 
-        if (img.data('display-restriction') !== 'No Image') {
-
+        if (img.data('display-restriction') === 'No Image') {
+            iiif_src = `${this.plugin_url}/img/image-unavailable.png`
+            if (!region_only) {
+                width = 200
+                height = 200
+            }
+        } else {
             if (img.data('display-restriction') === 'Thumbnail Only' && !region_only) {
                 region_only = true
                 width = 200
