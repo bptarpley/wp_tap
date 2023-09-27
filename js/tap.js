@@ -160,7 +160,7 @@ class SiteHeader {
                   </li>
                   <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
-                      Featured Artists
+                      Featured Projects
                     </a>
                     <div class="dropdown-menu bg-light">
                       <b>Buck Schiwetz</b>
