@@ -1459,6 +1459,9 @@ class ArtFooter {
                   style="height: 50px; width: auto; background-color: #FFFFFF; padding: 5px; padding-right: 17px;"
                   alt="The Center of Digital Humanities Research at Texas A&M University" />
               </div>
+              <div class="tap-footer-cell">
+                <a href="#tap-header-div" class="tap-footer-link ml-auto">^ Back to Top</a>
+              </div>
             </div>
         `)
     }

@@ -394,7 +394,10 @@ button.nav-link:focus {
 
 .tap-footer-cell:first-child {
     margin-left: 0px;
-    border-left: none;
+}
+
+.tap-footer-cell:last-child {
+    margin-left: auto;
 }
 
 a.tap-footer-link, a.tap-footer-link:hover {
@@ -406,7 +409,7 @@ a.tap-footer-link, a.tap-footer-link:hover {
         flex-direction: column;
     }
 
-    .tap-footer-cell, .tap-footer-cell:first-child {
+    .tap-footer-cell, .tap-footer-cell:first-child, .tap-footer-cell:last-child {
         border-left: none;
         margin-bottom: 20px;
         margin-left: auto;
