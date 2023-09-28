@@ -419,7 +419,8 @@ button.nav-link:focus {
 
 .tap-footnote-ref {
     vertical-align: super;
-    font-size: small;
+    font-size: 14px;
+    margin-right: 4px;
     text-decoration: none!important;
     color: #008DAB!important;
 }
