@@ -84,6 +84,25 @@ h2 {
     color: #000000!important;
 }
 
+blockquote {
+    background-color: #F2F2F2;
+    padding: 20px;
+    padding-left: 50px;
+    font-size: 18px;
+    margin-left: 10px!important;
+    margin-right: 10px!important;
+    position: relative;
+}
+
+blockquote::before {
+    content: "\201C";
+    font-size: 4em;
+    position: absolute;
+    left: 10px;
+    top: -10px;
+    color: #D6D6D6;
+}
+
 a {
     color: #000000!important;
     text-decoration: underline!important;
