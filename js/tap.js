@@ -165,9 +165,9 @@ class SiteHeader {
                     <div class="dropdown-menu bg-light">
                       <b>Buck Schiwetz</b>
                       <hr class="dropdown-divider">
-                      <a class="dropdown-item" href="/essay/">Introductory Essay</a>
+                      <a class="dropdown-item" href="/schiwetz/essay/">Introductory Essay</a>
                       <a class="dropdown-item" href="/">Gallery</a>
-                      <a class="dropdown-item" href="/map/">Map and Timeline</a>
+                      <a class="dropdown-item" href="/schiwetz/map/">Map and Timeline</a>
                     </div>
                   </li>
                   <li class="nav-item">
