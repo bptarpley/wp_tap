@@ -146,7 +146,7 @@ class SiteHeader {
 
         this.element.html(`
             <nav class="navbar navbar-expand-md navbar-light bg-light" style="background-color: #FFFFFF!important;">
-              <a class="navbar-brand" href="#">Texas Art Project</a>
+              <a class="navbar-brand" href="/">Texas Art Project</a>
               <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#tap-navbar" aria-controls="tap-navbar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
               </button>
