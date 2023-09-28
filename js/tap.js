@@ -135,6 +135,88 @@ class TexasArtProject {
         img.css('height', `${height}px`)
         img.data('loaded', true)
     }
+    
+    render_metadata(artwork, style='vertical') {
+        if (style === 'vertical') {
+            return `
+              <dl>
+                <dt>Year:</dt><dd>${artwork.year}</dd>
+                ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
+                ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd>Private Collection</dd>` : ''}
+                <dt>Medium:</dt><dd>${artwork.medium}</dd>
+                <dt>Surface:</dt><dd>${artwork.surface}</dd>
+                <dt>Size:</dt><dd>${artwork.size_inches}</dd>
+              </dl>
+              <a class="mt-2" href="/artwork/${artwork.id}/" target="_blank">See more...</a>
+            `
+        } else if (style === 'horizontal') {
+            return `
+                <div class="row">
+                  <div class="col-md-6">
+                    <dl>
+                      <dt>Year:</dt><dd>${artwork.year}</dd>
+                      <dt>Medium:</dt><dd>${artwork.medium}</dd>
+                      <dt>Surface:</dt><dd>${artwork.surface}</dd>
+                    </dl>
+                  </div>
+                  <div class="col-md-6 d-flex flex-column">
+                    <dl style="flex: 1;">
+                      ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
+                      ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd>Private Collection</dd>` : ''}
+                      <dt>Size:</dt><dd>${artwork.size_inches}</dd>
+                    </dl>
+                    <div class="w-100">
+                      <a class="float-right" href="/artwork/${artwork.id}/" target="_blank">See more...</a>
+                    </div>
+                  </div>
+                </div>
+            `
+        } else if (style === 'full') {
+            let tags = []
+            artwork.tags.forEach(tag => {
+                let [key, value] = tag.label.split(': ')
+                tags.push(`<dt>${key}:</dt><dd>${value}</dd>`)
+            })
+
+            let exhibits = []
+            artwork.exhibits.forEach(exhibit => {
+                exhibits.push(`<p>${exhibit.label}</p>`)
+            })
+
+            let prizes = []
+            artwork.prizes.forEach(prize => {
+                prizes.push(`<p><i>${prize.name}</i> awarded at ${prize.exhibit}</p>`)
+            })
+
+            return `
+                <dl>
+                  ${artwork.caption ? `<dt>Caption:</dt><dd>${artwork.caption}</dd>` : ''}
+                  ${artwork.alt_title ? `<dt>Alternate Title</dt><dd>${artwork.alt_title}</dd>` : ''}
+                  <dt>Creator:</dt><dd>${artwork.artists[0].label}</dd>
+                  <dt>Year:</dt><dd>${artwork.year}</dd>
+                  ${artwork.location ? `<dt>Depicted Place:</dt><dd><a href="/?filter_label=Depicted Place&param=f_location.id&value_label=${artwork.location.label}&value=${artwork.location.id}">${artwork.location.label}</a></dd>` : ''}
+                  ${artwork.edition ? `<dt>Edition</dt><dd>${artwork.edition}</dd>` : ''}
+                  ${tags.join('\n')}
+                  <dt>Medium:</dt><dd><a href="/?filter_label=Medium&param=f_medium&value_label=${artwork.medium}&value=${artwork.medium}">${artwork.medium}</a></dd>
+                  <dt>Surface:</dt><dd><a href="/?filter_label=Surface&param=f_surface&value_label=${artwork.surface}&value=${artwork.surface}">${artwork.surface}</a></dd>
+                  <dt>Size:</dt><dd>${artwork.size_inches}</dd>
+                  ${artwork.inscriptions ? `<dt>Inscriptions</dt><dd>${artwork.inscriptions}</dd>` : ''}
+                  ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_collection.id&value_label=${artwork.collection.label}&value=${artwork.collection.id}">${artwork.collection.label}</a></dd>` : ''}
+                  ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_anonymize_collector&value_label=Private Collection&value=true">Private Collection</a></dd>` : ''}
+                </dl>
+                
+                ${exhibits.length ? `
+                    <h2>Exhibits</h2>
+                    ${exhibits.join('\n')}
+                ` : ''}
+                
+                ${prizes.length ? `
+                    <h2>Prizes</h2>
+                    ${prizes.join('\n')}
+                ` : ''}
+            `
+        }
+    }
 }
 
 class SiteHeader {
@@ -301,34 +383,11 @@ class ArtGrid {
                     })
 
                 let meta = sender.metadata[artwork_id]
-                let tags = []
-                meta.tags.forEach(tag => {
-                    let [key, value] = tag.label.split(': ')
-                    tags.push(`<dt>${key}:</dt><dd>${value}</dd>`)
-                })
 
                 cell.append(`
                   <div class="tap-artgrid-metadata">
                     <h1>${meta.title}</h1>
-                    <div class="row">
-                      <div class="col-md-6">
-                        <dl>
-                          <dt>Year:</dt><dd>${meta.year}</dd>
-                          <dt>Medium:</dt><dd>${meta.medium}</dd>
-                          <dt>Surface:</dt><dd>${meta.surface}</dd>
-                        </dl>
-                      </div>
-                      <div class="col-md-6 d-flex flex-column">
-                        <dl style="flex: 1;">
-                          ${meta.collection && !meta.anonymize_collector ? `<dt>Collection:</dt><dd>${meta.collection.label}</dd>` : ''}
-                          ${meta.anonymize_collector ? `<dt>Collection:</dt><dd>Private Collection</dd>` : ''}
-                          <dt>Size:</dt><dd>${meta.size_inches}</dd>
-                        </dl>
-                        <div class="w-100">
-                          <a class="float-right" href="/artwork/${meta.id}/" target="_blank">See more...</a>
-                        </div>
-                      </div>
-                    </div>
+                    ${sender.tap.render_metadata(meta, 'horizontal')}
                   </div>
                 `)
 
@@ -1225,15 +1284,7 @@ class ArtMap {
                         data-display-restriction="${artwork.display_restriction ? artwork.display_restriction.label : 'none'}"
                         ${art_region ? `data-region="${art_region}"` : ''}
                       />
-                      <dl>
-                        <dt>Year:</dt><dd>${artwork.year}</dd>
-                        ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
-                        ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd>Private Collection</dd>` : ''}
-                        <dt>Medium:</dt><dd>${artwork.medium}</dd>
-                        <dt>Surface:</dt><dd>${artwork.surface}</dd>
-                        <dt>Size:</dt><dd>${artwork.size_inches}</dd>
-                      </dl>
-                      <a class="mt-2" href="/artwork/${artwork.id}/" target="_blank">See more...</a>
+                      ${sender.tap.render_metadata(artwork, 'vertical')}
                     </div>
                   </div>
                 </div>
@@ -1308,15 +1359,7 @@ class ArtMap {
                             data-display-restriction="${artwork.display_restriction ? artwork.display_restriction.label : 'none'}"
                             ${art_region ? `data-region="${art_region}"` : ''}
                           />
-                          <dl>
-                            <dt>Year:</dt><dd>${artwork.year}</dd>
-                            ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
-                            ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd>Private Collection</dd>` : ''}
-                            <dt>Medium:</dt><dd>${artwork.medium}</dd>
-                            <dt>Surface:</dt><dd>${artwork.surface}</dd>
-                            <dt>Size:</dt><dd>${artwork.size_inches}</dd>
-                          </dl>
-                          <a class="mt-2" href="/artwork/${artwork.id}/" target="_blank">See more...</a>
+                          ${sender.tap.render_metadata(artwork, 'vertical')}
                         </div>
                       </div>
                     </div>
@@ -1370,77 +1413,89 @@ class ArtDetail {
             this.tap.make_request(
                 `/api/corpus/${sender.tap.corpus_id}/ArtWork/${sender.artwork_id}/`,
                 'GET',
-                sender.criteria,
+                {},
                 function(meta) {
-                    let tags = []
-                    meta.tags.forEach(tag => {
-                        let [key, value] = tag.label.split(': ')
-                        tags.push(`<dt>${key}:</dt><dd><a href="/?filter_label=${key}&param=f_tags.id&value_label=${value}&value=${tag.id}">${value}</a></dd>`)
-                    })
 
-                    sender.metadata_div.append(`
-                      <div class="tap-artgrid-metadata p-0 m-0">
-                        <h1 class="pt-0">${meta.title}</h1>
-                        <dl>
-                          ${meta.caption ? `<dt>Caption:</dt><dd>${meta.caption}</dd>` : ''}
-                          ${meta.alt_title ? `<dt>Alternate Title</dt><dd>${meta.alt_title}</dd>` : ''}
-                          <dt>Creator:</dt><dd>${meta.artists[0].label}</dd>
-                          <dt>Year:</dt><dd>${meta.year}</dd>
-                          ${meta.location ? `<dt>Depicted Place:</dt><dd><a href="/?filter_label=Depicted Place&param=f_location.id&value_label=${meta.location.label}&value=${meta.location.id}">${meta.location.label}</a></dd>` : ''}
-                          ${meta.edition ? `<dt>Edition</dt><dd>${meta.edition}</dd>` : ''}
-                          ${tags.join('\n')}
-                          <dt>Medium:</dt><dd><a href="/?filter_label=Medium&param=f_medium&value_label=${meta.medium}&value=${meta.medium}">${meta.medium}</a></dd>
-                          <dt>Surface:</dt><dd><a href="/?filter_label=Surface&param=f_surface&value_label=${meta.surface}&value=${meta.surface}">${meta.surface}</a></dd>
-                          <dt>Size:</dt><dd>${meta.size_inches}</dd>
-                          ${meta.inscriptions ? `<dt>Inscriptions</dt><dd>${meta.inscriptions}</dd>` : ''}
-                          ${meta.collection && !meta.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_collection.id&value_label=${meta.collection.label}&value=${meta.collection.id}">${meta.collection.label}</a></dd>` : ''}
-                          ${meta.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_anonymize_collector&value_label=Private Collection&value=true">Private Collection</a></dd>` : ''}
-                        </dl>
-                      </div>
-                    `)
+                    sender.tap.make_request(
+                        `/api/corpus/${sender.tap.corpus_id}/Exhibition/`,
+                        'GET',
+                        {'page-size': 100, 'f_artwork.id': sender.artwork_id},
+                        function(exhibitions) {
+                            meta.exhibits = []
+                            if (exhibitions.records) {
+                                exhibitions.records.forEach(exhibition => {
+                                    meta.exhibits.push(Object.assign({}, exhibition.exhibit))
+                                })
+                            }
 
-                    if (meta.display_restriction && ['Thumbnail Only', 'No Image'].includes(meta.display_restriction.label)) {
-                        let art_region = null
-                        if (meta.hasOwnProperty('featured_region_x') && meta.featured_region_x) {
-                            art_region = `${meta.featured_region_x},${meta.featured_region_y},${meta.featured_region_width},${meta.featured_region_width}`;
+                            sender.tap.make_request(
+                                `/api/corpus/${sender.tap.corpus_id}/Prize/`,
+                                'GET',
+                                {'page-size': 100, 'f_artwork.id': sender.artwork_id},
+                                function(prizes) {
+                                    meta.prizes = []
+                                    if (prizes.records) {
+                                        prizes.records.forEach(prize => {
+                                            meta.prizes.push({
+                                                name: prize.name,
+                                                exhibit: prize.exhibit.label
+                                            })
+                                        })
+                                    }
+
+                                    sender.metadata_div.append(`
+                                      <div class="tap-artgrid-metadata p-0 m-0">
+                                        <h1 class="pt-0">${meta.title}</h1>
+                                        ${sender.tap.render_metadata(meta, 'full')}
+                                      </div>
+                                    `)
+
+                                    if (meta.display_restriction && ['Thumbnail Only', 'No Image'].includes(meta.display_restriction.label)) {
+                                        let art_region = null
+                                        if (meta.hasOwnProperty('featured_region_x') && meta.featured_region_x) {
+                                            art_region = `${meta.featured_region_x},${meta.featured_region_y},${meta.featured_region_width},${meta.featured_region_width}`;
+                                        }
+                                        sender.image_div.append(`
+                                            <img
+                                                id="tap-artgrid-img-${meta.id}"
+                                                src="${sender.tap.plugin_url + '/img/image-loading.svg'}"
+                                                class="tap-artgrid-img img-responsive mt-4"
+                                                data-artwork-id="${meta.id}"
+                                                data-iiif-identifier="${meta.iiif_uri}"
+                                                data-display-restriction="${meta.display_restriction ? meta.display_restriction.label : 'none'}"
+                                                ${art_region ? `data-region="${art_region}"` : ''}
+                                                style="display: block; margin: auto;"
+                                            />
+                                            <div class="text-center text-muted mt-2">The display of this image has been restricted.</div>
+                                        `)
+                                        let img = jQuery(`#tap-artgrid-img-${meta.id}`)
+                                        sender.tap.inject_iiif_info(img, function() {
+                                            sender.tap.render_image(img, 200, true)
+                                        })
+                                    } else {
+                                        let dragon_height = `${sender.image_div.height() - 40}px`
+                                        if (window.innerWidth <= 767) dragon_height = '50vh';
+                                        sender.image_div.append(`
+                                            <div id="tap-dragon" class="w-100" style="height: ${dragon_height};"></div>
+                                        `)
+
+                                        sender.dragon = OpenSeadragon({
+                                            id:                 "tap-dragon",
+                                            prefixUrl:          `${sender.tap.plugin_url}/js/openseadragon/images/`,
+                                            preserveViewport:   false,
+                                            visibilityRatio:    1,
+                                            minZoomLevel:       .50,
+                                            maxZoomLevel:       15,
+                                            defaultZoomLevel:   0,
+                                            //homeFillsViewer:    true,
+                                            showRotationControl: true,
+                                            tileSources:   [meta.iiif_uri],
+                                        })
+                                    }
+                                }
+                            )
                         }
-                        sender.image_div.append(`
-                            <img
-                                id="tap-artgrid-img-${meta.id}"
-                                src="${sender.tap.plugin_url + '/img/image-loading.svg'}"
-                                class="tap-artgrid-img img-responsive mt-4"
-                                data-artwork-id="${meta.id}"
-                                data-iiif-identifier="${meta.iiif_uri}"
-                                data-display-restriction="${meta.display_restriction ? meta.display_restriction.label : 'none'}"
-                                ${art_region ? `data-region="${art_region}"` : ''}
-                                style="display: block; margin: auto;"
-                            />
-                            <div class="text-center text-muted mt-2">The display of this image has been restricted.</div>
-                        `)
-                        let img = jQuery(`#tap-artgrid-img-${meta.id}`)
-                        sender.tap.inject_iiif_info(img, function() {
-                            sender.tap.render_image(img, 200, true)
-                        })
-                    } else {
-                        let dragon_height = `${sender.image_div.height() - 40}px`
-                        if (window.innerWidth <= 767) dragon_height = '50vh';
-                        sender.image_div.append(`
-                            <div id="tap-dragon" class="w-100" style="height: ${dragon_height};"></div>
-                        `)
-
-                        sender.dragon = OpenSeadragon({
-                            id:                 "tap-dragon",
-                            prefixUrl:          `${sender.tap.plugin_url}/js/openseadragon/images/`,
-                            preserveViewport:   false,
-                            visibilityRatio:    1,
-                            minZoomLevel:       .50,
-                            maxZoomLevel:       15,
-                            defaultZoomLevel:   0,
-                            //homeFillsViewer:    true,
-                            showRotationControl: true,
-                            tileSources:   [meta.iiif_uri],
-                        })
-                    }
+                    )
                 }
             )
         }
