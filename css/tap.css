@@ -99,7 +99,7 @@ blockquote::before {
     font-size: 4em;
     position: absolute;
     left: 10px;
-    top: -10px;
+    top: 0px;
     color: #D6D6D6;
 }
 
