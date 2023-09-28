@@ -416,3 +416,10 @@ button.nav-link:focus {
         margin-right: auto;
     }
 }
+
+.tap-footnote-ref {
+    vertical-align: super;
+    font-size: small;
+    text-decoration: none;
+    color: #008DAB;
+}
