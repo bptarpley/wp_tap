@@ -278,66 +278,68 @@ class ArtGrid {
 
         jQuery(document).on('click', 'div.tap-artgrid-cell', function() {
             let cell = jQuery(this)
-            let featured_img = jQuery('.tap-artgrid-img.featured')
-            let featured_cell = jQuery('.tap-artgrid-cell.featured')
-            if (featured_img.length) {
-                featured_cell.removeClass('col-md-12')
-                featured_cell.addClass('col-md-4')
-                sender.tap.render_image(featured_img, parseInt(cell.width()))
-                jQuery('.tap-artgrid-metadata').remove()
-                featured_cell.removeClass('featured')
-                featured_img.removeClass('featured')
-            }
+            if (!cell.hasClass('featured')) {
+                let featured_img = jQuery('.tap-artgrid-img.featured')
+                let featured_cell = jQuery('.tap-artgrid-cell.featured')
+                if (featured_img.length) {
+                    featured_cell.removeClass('col-md-12')
+                    featured_cell.addClass('col-md-4')
+                    sender.tap.render_image(featured_img, parseInt(cell.width()))
+                    jQuery('.tap-artgrid-metadata').remove()
+                    featured_cell.removeClass('featured')
+                    featured_img.removeClass('featured')
+                }
 
-            let artwork_id = cell.data('artwork-id')
-            let img = jQuery(`#tap-artgrid-img-${artwork_id}`)
-            let grid_width = parseInt(sender.element.width())
-            if (img.data('fullwidth'))
-                sender.tap.render_image(img, grid_width - 10, false)
-            else
-                sender.tap.inject_iiif_info(img, function() {
+                let artwork_id = cell.data('artwork-id')
+                let img = jQuery(`#tap-artgrid-img-${artwork_id}`)
+                let grid_width = parseInt(sender.element.width())
+                if (img.data('fullwidth'))
                     sender.tap.render_image(img, grid_width - 10, false)
+                else
+                    sender.tap.inject_iiif_info(img, function () {
+                        sender.tap.render_image(img, grid_width - 10, false)
+                    })
+
+                let meta = sender.metadata[artwork_id]
+                let tags = []
+                meta.tags.forEach(tag => {
+                    let [key, value] = tag.label.split(': ')
+                    tags.push(`<dt>${key}:</dt><dd>${value}</dd>`)
                 })
 
-            let meta = sender.metadata[artwork_id]
-            let tags = []
-            meta.tags.forEach(tag => {
-                let [key, value] = tag.label.split(': ')
-                tags.push(`<dt>${key}:</dt><dd>${value}</dd>`)
-            })
-
-            cell.append(`
-              <div class="tap-artgrid-metadata">
-                <h1>${meta.title}</h1>
-                <div class="row">
-                  <div class="col-md-6">
-                    <dl>
-                      <dt>Year:</dt><dd>${meta.year}</dd>
-                      <dt>Medium:</dt><dd>${meta.medium}</dd>
-                      <dt>Surface:</dt><dd>${meta.surface}</dd>
-                    </dl>
-                  </div>
-                  <div class="col-md-6 d-flex flex-column">
-                    <dl style="flex: 1;">
-                      ${meta.collection && !meta.anonymize_collector ? `<dt>Collection:</dt><dd>${meta.collection.label}</dd>` : ''}
-                      <dt>Size:</dt><dd>${meta.size_inches}</dd>
-                    </dl>
-                    <div class="w-100">
-                      <a class="float-right" href="/artwork/${meta.id}/" target="_blank">See more...</a>
+                cell.append(`
+                  <div class="tap-artgrid-metadata">
+                    <h1>${meta.title}</h1>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <dl>
+                          <dt>Year:</dt><dd>${meta.year}</dd>
+                          <dt>Medium:</dt><dd>${meta.medium}</dd>
+                          <dt>Surface:</dt><dd>${meta.surface}</dd>
+                        </dl>
+                      </div>
+                      <div class="col-md-6 d-flex flex-column">
+                        <dl style="flex: 1;">
+                          ${meta.collection && !meta.anonymize_collector ? `<dt>Collection:</dt><dd>${meta.collection.label}</dd>` : ''}
+                          ${meta.anonymize_collector ? `<dt>Collection:</dt><dd>Private Collection</dd>` : ''}
+                          <dt>Size:</dt><dd>${meta.size_inches}</dd>
+                        </dl>
+                        <div class="w-100">
+                          <a class="float-right" href="/artwork/${meta.id}/" target="_blank">See more...</a>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            `)
+                `)
 
-            cell.removeClass('col-md-4')
-            cell.addClass('col-sm-12')
-            cell.addClass('featured')
-            img.addClass('featured')
-            setTimeout(function() {
-                cell[0].scrollIntoView({behavior: "smooth"})
-            }, 1500)
-
+                cell.removeClass('col-md-4')
+                cell.addClass('col-sm-12')
+                cell.addClass('featured')
+                img.addClass('featured')
+                setTimeout(function () {
+                    cell[0].scrollIntoView({behavior: "smooth"})
+                }, 1500)
+            }
         })
     }
 
@@ -1226,6 +1228,7 @@ class ArtMap {
                       <dl>
                         <dt>Year:</dt><dd>${artwork.year}</dd>
                         ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
+                        ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd>Private Collection</dd>` : ''}
                         <dt>Medium:</dt><dd>${artwork.medium}</dd>
                         <dt>Surface:</dt><dd>${artwork.surface}</dd>
                         <dt>Size:</dt><dd>${artwork.size_inches}</dd>
@@ -1308,6 +1311,7 @@ class ArtMap {
                           <dl>
                             <dt>Year:</dt><dd>${artwork.year}</dd>
                             ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd>${artwork.collection.label}</dd>` : ''}
+                            ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd>Private Collection</dd>` : ''}
                             <dt>Medium:</dt><dd>${artwork.medium}</dd>
                             <dt>Surface:</dt><dd>${artwork.surface}</dd>
                             <dt>Size:</dt><dd>${artwork.size_inches}</dd>
@@ -1390,6 +1394,7 @@ class ArtDetail {
                           <dt>Size:</dt><dd>${meta.size_inches}</dd>
                           ${meta.inscriptions ? `<dt>Inscriptions</dt><dd>${meta.inscriptions}</dd>` : ''}
                           ${meta.collection && !meta.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_collection.id&value_label=${meta.collection.label}&value=${meta.collection.id}">${meta.collection.label}</a></dd>` : ''}
+                          ${meta.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_anonymize_collector&value_label=Private Collection&value=true">Private Collection</a></dd>` : ''}
                         </dl>
                       </div>
                     `)
