@@ -71,6 +71,7 @@
 	{
 	    $corpora_host = getenv('TAP_CORPORA_HOST');
 	    $corpus_id = getenv('TAP_CORPUS_ID');
+	    $buck_agent_id = getenv('TAP_BUCK_AGENT_ID');
 	    $corpora_token = getenv('TAP_TOKEN');
 
 	    if (!$corpora_token) {
@@ -88,6 +89,7 @@
 				    '<?=$corpora_host?>',
 				    '<?=$corpora_token?>',
 				    '<?=$corpus_id?>',
+				    '<?=$buck_agent_id?>',
 				    plugin_url
                 )
 			});

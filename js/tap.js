@@ -1,8 +1,9 @@
 class TexasArtProject {
-    constructor(corpora_host, corpora_token, clo_corpus_id, plugin_url) {
+    constructor(corpora_host, corpora_token, tap_corpus_id, buck_agent_id, plugin_url) {
         this.host = corpora_host
         this.token = corpora_token
-        this.corpus_id = clo_corpus_id
+        this.corpus_id = tap_corpus_id
+        this.buck_agent_id = buck_agent_id
         this.path = window.location.pathname
         this.get_params = new URLSearchParams(window.location.search)
         this.plugin_url = plugin_url
@@ -413,7 +414,7 @@ class ArtGrid {
         this.tap.make_request(
             `/api/corpus/${sender.tap.corpus_id}/ArtWork/`,
             'GET',
-            sender.criteria,
+            Object.assign(sender.criteria, { 'f_artists.id': sender.tap.buck_agent_id }),
             function(artworks) {
                 if (artworks.records) {
 
@@ -599,7 +600,7 @@ class ArtMenu {
             this.tap.make_request(
                 `/api/corpus/${sender.tap.corpus_id}/ArtWork/`,
                 'GET',
-                Object.assign({'page-size': 0}, queries[query].params),
+                Object.assign({'page-size': 0}, queries[query].params,{ 'f_artists.id': sender.tap.buck_agent_id }),
                 function(data) {
                     if (data.meta && data.meta.aggregations && query in data.meta.aggregations) {
                         let list = jQuery(`#tap-artmenu-${query}-list`)
@@ -675,7 +676,7 @@ class ArtMenu {
         this.tap.make_request(
             `/api/corpus/${sender.tap.corpus_id}/Exhibition/`,
             'GET',
-            {'page-size': 100, only: 'artwork.id,exhibit.label'},
+            Object.assign({'page-size': 100, only: 'artwork.id,exhibit.label', 'content_view': 'corpus_6328b1338170d921f63fc09d_buck_exhibitions' }),
             function(data) {
                 let exhibitions = {}
                 let list = jQuery('#tap-artmenu-exhibition-list')
@@ -703,7 +704,7 @@ class ArtMenu {
         this.tap.make_request(
             `/api/corpus/${sender.tap.corpus_id}/Prize/`,
             'GET',
-            {'page-size': 100, 'e_artwork.id': 'y', only: 'artwork.id,name'},
+            {'page-size': 100, 'e_artwork.id': 'y', only: 'artwork.id,name', content_view: 'corpus_6328b1338170d921f63fc09d_buck_prizes'},
             function(data) {
                 let prizes = {}
                 let list = jQuery('#tap-artmenu-prize-list')
@@ -1008,7 +1009,7 @@ class ArtMap {
                 sender.tap.make_request(
                     `/api/corpus/${sender.tap.corpus_id}/Exhibit/`,
                     'GET',
-                    {'page-size': 500},
+                    {'page-size': 500, 'f_agents.id': this.tap.buck_agent_id},
                     function(exhibits) {
                         if (exhibits.records) {
                             exhibits.records.forEach(exhibit => {
@@ -1022,7 +1023,7 @@ class ArtMap {
                             sender.tap.make_request(
                                 `/api/corpus/${sender.tap.corpus_id}/Exhibition/`,
                                 'GET',
-                                {'page-size': 1000, 'only': 'exhibit.id,artwork.id'},
+                                {'page-size': 1000, 'only': 'exhibit.id,artwork.id', content_view: 'corpus_6328b1338170d921f63fc09d_buck_exhibitions'},
                                 function(exhibitions) {
                                     if (exhibitions.records) {
                                         exhibitions.records.forEach(exhibition => {
@@ -1123,7 +1124,7 @@ class ArtMap {
         this.tap.make_request(
             `/api/corpus/${sender.tap.corpus_id}/ArtWork/`,
             'GET',
-            sender.criteria,
+            Object.assign(sender.criteria, {'f_artists.id': sender.tap.buck_agent_id}),
             function (artworks) {
                 if (artworks.records) {
                     artworks.records.forEach(artwork => {
@@ -1514,14 +1515,14 @@ class ArtFooter {
                 Texas Art Project © <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="tap-footer-link" target="_blank">CC BY-NC-SA 4.0</a>
               </div>
               <div class="tap-footer-cell">
-                <img src="http://liberalarts.tamu.edu/codhr/wp-content/uploads/sites/34/2023/07/Logo-white-bg-left-align.png"
+                <img src="${this.tap.plugin_url}/img/codhr-footer-logo.png"
                   style="height: 50px; width: auto; background-color: #FFFFFF; padding: 5px;"
                   alt="The Center of Digital Humanities Research at Texas A&M University" />
               </div>
               <div class="tap-footer-cell">
-                <img src="https://tamupvfa.b-cdn.net/app/uploads/2022/06/PVFA-logo-Maroon-Horizontal.png"
+                <img src="${this.tap.plugin_url}/img/pvfa-footer-logo.png"
                   style="height: 50px; width: auto; background-color: #FFFFFF; padding: 5px; padding-right: 17px;"
-                  alt="The Center of Digital Humanities Research at Texas A&M University" />
+                  alt="The School of Performance, Visualization & Fine Arts Texas A&M University" />
               </div>
               <div class="tap-footer-cell">
                 <a href="#tap-header-div" class="tap-footer-link ml-auto">^ Back to Top</a>
