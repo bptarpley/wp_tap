@@ -42,22 +42,6 @@
 		wp_enqueue_script('tap-rangeslider', plugin_dir_url(__FILE__).'js/toolcool-range-slider.min.js');
 		wp_enqueue_script('tap-leaflet', plugin_dir_url(__FILE__).'js/leaflet.js');
 		wp_enqueue_script('tap-leaflet-cluster', plugin_dir_url(__FILE__).'js/leaflet.markercluster.js');
-		wp_enqueue_script(
-		    'tap-script',
-		    plugin_dir_url( __FILE__ ).'js/tap.js',
-		    array(
-		        'jquery',
-		        'jquery-mark',
-		        'tap-popper',
-		        'tap-tippy',
-		        'tap-autocomplete',
-		        'tap-openseadragon',
-		        'tap-rangeslider-marks',
-		        'tap-rangeslider',
-		        'tap-leaflet',
-		        'tap-leaflet-cluster'
-            )
-        ); //your javascript library
 
 		// Register CSS
 		wp_enqueue_style('jquery-ui-css', plugin_dir_url( __FILE__ ).'css/jquery-ui.min.css');
@@ -73,15 +57,17 @@
 	    $corpus_id = getenv('TAP_CORPUS_ID');
 	    $buck_agent_id = getenv('TAP_BUCK_AGENT_ID');
 	    $corpora_token = getenv('TAP_TOKEN');
+	    $plugin_path = plugin_dir_url( __FILE__ );
 
 	    if (!$corpora_token) {
 	        $corpora_token = '';
 	    }
 
 ?>
-		<script>
-		    let tap = null;
-		    let plugin_url = "<?php echo plugin_dir_url( __FILE__ ); ?>"
+		<script type="module">
+            import { TexasArtProject } from '<?=$plugin_path?>js/tap/tap.js'
+		    let tap = null
+		    let plugin_url = '<?=$plugin_path?>'
 
 			jQuery(document).ready(function($)
 			{
@@ -92,7 +78,7 @@
 				    '<?=$buck_agent_id?>',
 				    plugin_url
                 )
-			});
+			})
 		</script>	
 <?php		
 	}

@@ -295,6 +295,14 @@ details[open] > summary:before {
     content: "\f140";
 }
 
+.tap-artmenu-list.empty > summary {
+    color: #A1A1A1;
+    margin-left: 20px;
+}
+.tap-artmenu-list.empty > summary:before {
+    content: ''
+}
+
 details ul {
     list-style-type: none;
 }
@@ -358,6 +366,18 @@ button.nav-link:focus {
 
 .leaflet-control-zoom-in, .leaflet-control-zoom-out, .leaflet-popup-close-button {
     text-decoration: none!important;
+}
+
+.leaflet-control-zoom-home {
+    background-color: #FFFFFF;
+    border: solid 2px #CCCCCC;
+    border-radius: 4px;
+    width: 34px;
+}
+
+.leaflet-control-zoom-home:hover {
+    background-color: #F4F4F4;
+    color: #008DAB;
 }
 
 .leaflet-control-attribution.leaflet-control {
