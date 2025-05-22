@@ -2,7 +2,7 @@ export class ArtGrid {
     constructor(tap_instance, element) {
         this.tap = tap_instance
         this.element = element
-        this.criteria = {'page-size': 5000, 'page': 1}
+        this.criteria = {'page-size': 5000, 'page': 1, 'f_project.id': this.tap.projects.buck}
         this.grid_width = 600
         this.cell_width = 200
         this.metadata = {}

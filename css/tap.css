@@ -404,7 +404,7 @@ button.nav-link:focus {
     border-radius: 0;
 }
 
-#tap-artwork-detail-div {
+#tap-artwork-detail-div, #tap-ephemera-detail-div {
     background-color: #f4f4f4;
 }
 
