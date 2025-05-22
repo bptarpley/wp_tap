@@ -214,6 +214,7 @@ details ul li:hover {
 /* TIMELINE STYLING */
 #tap-ephemera-timeline {
     min-width: 1000px;
+    max-width: 1300px;
 }
 
 #tap-ephemera-timeline h3 {

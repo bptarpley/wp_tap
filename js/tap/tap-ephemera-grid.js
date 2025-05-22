@@ -93,6 +93,7 @@ export class EphemeraGrid {
             })
         }, {threshold: 0.3})
 
+        /*
         jQuery(document).on('click', '.tap-artgrid-img', function() {
             jQuery('#detail-modal').modal('show')
             let cell = jQuery(this)
@@ -161,6 +162,7 @@ export class EphemeraGrid {
                 'overflow-y': 'scroll'
             })
         })
+         */
     }
 
     load_images() {
@@ -177,14 +179,16 @@ export class EphemeraGrid {
                 */
                 sender.element.append(`
                 <div id="tap-artgrid-cell-${artID}" class="col-md-4 tap-artgrid-cell" data-artifact-id="${artID}">
-                  <img
-                    id="tap-artgrid-img-${artID}"
-                    src="${sender.tap.plugin_url}/img/image-loading.svg"
-                    class="tap-artgrid-img img-responsive"
-                    data-artifact-id="${artID}"
-                    data-iiif-identifier=""
-                    ${art_region ? `data-region="${art_region}"` : ''}
-                  />
+                  <a href="/ephemera-detail/${artID}/" target="_blank">
+                      <img
+                        id="tap-artgrid-img-${artID}"
+                        src="${sender.tap.plugin_url}/img/image-loading.svg"
+                        class="tap-artgrid-img img-responsive"
+                        data-artifact-id="${artID}"
+                        data-iiif-identifier=""
+                        ${art_region ? `data-region="${art_region}"` : ''}
+                      />
+                  </a>
                 </div>
             `)
             }
