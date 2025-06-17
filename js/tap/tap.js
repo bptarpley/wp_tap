@@ -4,15 +4,19 @@ import { ArtGrid } from './tap-art-grid.js'
 import { ArtMenu } from './tap-art-menu.js'
 import { ArtMap } from './tap-art-map.js'
 import { ArtDetail } from './tap-art-detail.js'
+import { EphemeraMenu } from './tap-ephemera-menu.js'
+import { EphemeraGrid } from './tap-ephemera-grid.js'
+import { EphemeraTimeline } from './tap-ephemera-timeline.js'
+import { EphemeraDetail } from './tap-ephemera-detail.js'
 import { ArtFooter } from './tap-art-footer.js'
 
 
 export class TexasArtProject {
-    constructor(corpora_host, corpora_token, tap_corpus_id, buck_agent_id, plugin_url) {
+    constructor(corpora_host, corpora_token, tap_corpus_id, projects, plugin_url) {
         this.host = corpora_host
         this.token = corpora_token
         this.corpus_id = tap_corpus_id
-        this.buck_agent_id = buck_agent_id
+        this.projects = Object.assign({}, projects)
         this.path = window.location.pathname
         this.get_params = new URLSearchParams(window.location.search)
         this.plugin_url = plugin_url
@@ -62,6 +66,30 @@ export class TexasArtProject {
             this.artdetail = new ArtDetail(this, tap_artdetail)
         }
 
+        // EPHEMERA GRID
+        let tap_ephemera_grid = jQuery('#tap-ephemera-grid')
+        if (tap_ephemera_grid.length) {
+            this.ephemeraGrid = new EphemeraGrid(this, tap_ephemera_grid)
+        }
+
+        // EPHEMERA MENU
+        let tap_ephemera_menu = jQuery('#tap-ephemera-menu')
+        if (tap_ephemera_menu.length) {
+            this.ephemeraMenu = new EphemeraMenu(this, tap_ephemera_menu, this.ephemeraGrid, "Search DWG Ephemera")
+        }
+
+        // EPHEMERA TIMELINE
+        let tap_ephemera_timeline = jQuery('#tap-ephemera-timeline')
+        if (tap_ephemera_timeline.length) {
+            this.ephemeraTimeline = new EphemeraTimeline(this, tap_ephemera_timeline)
+        }
+
+        // EPHEMERA DETAIL
+        let tap_ephemera_detail = jQuery('#tap-ephemera-detail-div')
+        if (tap_ephemera_detail.length) {
+            this.ephemeraDetail = new EphemeraDetail(this, tap_ephemera_detail)
+        }
+
         // rig up the site footer
         let tap_site_footer_div = jQuery('#tap-footer-div')
         if (tap_site_footer_div.length) {
@@ -98,6 +126,26 @@ export class TexasArtProject {
         return a_string.split(instance).length
     }
 
+    sortObjectByKey(obj, nestedKey) {
+        return Object.keys(obj).sort((keyA, keyB) => {
+            // Get the nested values
+            const valueA = obj[keyA][nestedKey]
+            const valueB = obj[keyB][nestedKey]
+
+            // Handle cases where the nested key doesn't exist
+            if (valueA === undefined && valueB === undefined) return 0;
+            if (valueA === undefined) return 1
+            if (valueB === undefined) return -1
+
+            // Compare the values
+            if (typeof valueA === 'string' && typeof valueB === 'string') {
+                return valueA.localeCompare(valueB) // For string comparison
+            } else {
+                return valueA - valueB // For numeric comparison
+            }
+        })
+    }
+
     inject_iiif_info(img, callback) {
         jQuery.getJSON(`${img.data('iiif-identifier')}/info.json`, {}, function(info) {
             img.data('fullwidth', info.width)
@@ -110,8 +158,8 @@ export class TexasArtProject {
 
     render_image(img, size, region_only=true) {
         let iiif_src
-        let width = size
-        let height = size
+        let width = parseInt(size)
+        let height = parseInt(size)
 
         if (img.data('display-restriction') === 'No Image') {
             iiif_src = `${this.plugin_url}/img/image-unavailable.png`
@@ -204,15 +252,15 @@ export class TexasArtProject {
                   ${artwork.alt_title ? `<dt>Alternate Title</dt><dd>${artwork.alt_title}</dd>` : ''}
                   <dt>Creator:</dt><dd>${artwork.artists[0].label}</dd>
                   <dt>Year:</dt><dd>${artwork.year}</dd>
-                  ${artwork.location ? `<dt>Depicted Place:</dt><dd><a href="/?filter_label=Depicted Place&param=f_location.id&value_label=${artwork.location.label}&value=${artwork.location.id}">${artwork.location.label}</a></dd>` : ''}
+                  ${artwork.location ? `<dt>Depicted Place:</dt><dd><a href="/schiwetz/home/?filter_label=Depicted Place&param=f_location.id&value_label=${artwork.location.label}&value=${artwork.location.id}">${artwork.location.label}</a></dd>` : ''}
                   ${artwork.edition ? `<dt>Edition</dt><dd>${artwork.edition}</dd>` : ''}
                   ${tags.join('\n')}
-                  <dt>Medium:</dt><dd><a href="/?filter_label=Medium&param=f_medium&value_label=${artwork.medium}&value=${artwork.medium}">${artwork.medium}</a></dd>
-                  ${artwork.surface ? `<dt>Surface:</dt><dd><a href="/?filter_label=Surface&param=f_surface&value_label=${artwork.surface}&value=${artwork.surface}">${artwork.surface}</a></dd>` : ''}
+                  <dt>Medium:</dt><dd><a href="/schiwetz/home/?filter_label=Medium&param=f_medium&value_label=${artwork.medium}&value=${artwork.medium}">${artwork.medium}</a></dd>
+                  ${artwork.surface ? `<dt>Surface:</dt><dd><a href="/schiwetz/home/?filter_label=Surface&param=f_surface&value_label=${artwork.surface}&value=${artwork.surface}">${artwork.surface}</a></dd>` : ''}
                   <dt>Size:</dt><dd>${artwork.size_inches}</dd>
                   ${artwork.inscriptions ? `<dt>Inscriptions</dt><dd>${artwork.inscriptions}</dd>` : ''}
-                  ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_collection.id&value_label=${artwork.collection.label}&value=${artwork.collection.id}">${artwork.collection.label}</a></dd>` : ''}
-                  ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_anonymize_collector&value_label=Private Collection&value=true">Private Collection</a></dd>` : ''}
+                  ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/schiwetz/home/?filter_label=Collection&param=f_collection.id&value_label=${artwork.collection.label}&value=${artwork.collection.id}">${artwork.collection.label}</a></dd>` : ''}
+                  ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/schiwetz/home/?filter_label=Collection&param=f_anonymize_collector&value_label=Private Collection&value=true">Private Collection</a></dd>` : ''}
                 </dl>
                 
                 ${exhibits.length ? `

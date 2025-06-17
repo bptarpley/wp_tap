@@ -27,7 +27,7 @@ export class SiteHeader {
                       <b>Buck Schiwetz</b>
                       <hr class="dropdown-divider">
                       <a class="dropdown-item" href="/schiwetz/essay/">Introductory Essay</a>
-                      <a class="dropdown-item" href="/">Gallery</a>
+                      <a class="dropdown-item" href="/schiwetz/home/">Gallery</a>
                       <a class="dropdown-item" href="/schiwetz/map/">Map and Timeline</a>
                     </div>
                   </li>

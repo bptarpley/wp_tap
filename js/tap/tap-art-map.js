@@ -194,9 +194,9 @@ export class ArtMap {
                     })
 
                     sender.tap.make_request(
-                        `/api/corpus/${sender.tap.corpus_id}/Exhibit/`,
+                        `/api/corpus/${sender.tap.corpus_id}/Event/`,
                         'GET',
-                        {'page-size': 500, 'f_agents.id': this.tap.buck_agent_id},
+                        {'page-size': 500, 'f_project.id': sender.tap.projects.buck},
                         function(exhibits) {
                             if (exhibits.records) {
                                 exhibits.records.forEach(exhibit => {
@@ -210,14 +210,14 @@ export class ArtMap {
                                 sender.tap.make_request(
                                     `/api/corpus/${sender.tap.corpus_id}/Exhibition/`,
                                     'GET',
-                                    {'page-size': 1000, 'only': 'exhibit.id,artwork.id', content_view: 'corpus_6328b1338170d921f63fc09d_buck_exhibitions'},
+                                    {'page-size': 1000, 'only': 'event.id,artwork.id', 'f_project.id': sender.tap.projects.buck},
                                     function(exhibitions) {
                                         if (exhibitions.records) {
                                             exhibitions.records.forEach(exhibition => {
                                                 if (!(exhibition.artwork.id in sender.artwork_exhibit_map)) {
                                                     sender.artwork_exhibit_map[exhibition.artwork.id] = []
                                                 }
-                                                sender.artwork_exhibit_map[exhibition.artwork.id].push(exhibition.exhibit.id)
+                                                sender.artwork_exhibit_map[exhibition.artwork.id].push(exhibition.event.id)
                                             })
                                         }
 

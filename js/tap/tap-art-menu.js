@@ -219,7 +219,7 @@ export class ArtMenu {
         if (!sender.show_year) query_names = query_names.filter(n => n !== 'decade')
         if (!sender.show_origin) query_names = query_names.filter(n => n !== 'origin')
 
-        let existing_criteria = Object.assign({}, sender.grid.criteria)
+        let existing_criteria = Object.assign({'f_project.id': sender.tap.projects.buck}, sender.grid.criteria)
         delete existing_criteria['page-size']
         delete existing_criteria['page']
 
@@ -230,7 +230,6 @@ export class ArtMenu {
                 Object.assign(
                     {'page-size': 0},
                     queries[query].params,
-                    { 'f_artists.id': sender.tap.buck_agent_id },
                     existing_criteria
                 ),
                 function(data) {
@@ -327,15 +326,15 @@ export class ArtMenu {
         this.tap.make_request(
             `/api/corpus/${sender.tap.corpus_id}/Exhibition/`,
             'GET',
-            Object.assign({'page-size': 100, only: 'artwork.id,exhibit.label', 'content_view': 'corpus_6328b1338170d921f63fc09d_buck_exhibitions' }, existing_artwork_filter),
+            Object.assign({'page-size': 100, only: 'artwork.id,event.label', 'f_project.id': this.tap.projects.buck}, existing_artwork_filter),
             function(data) {
                 let exhibitions = {}
                 let list = jQuery('#tap-artmenu-exhibition-list')
                 let has_results = false
 
                 data.records.forEach(record => {
-                    if (!(record.exhibit.label in exhibitions)) exhibitions[record.exhibit.label] = []
-                    exhibitions[record.exhibit.label].push(record.artwork.id)
+                    if (!(record.event.label in exhibitions)) exhibitions[record.event.label] = []
+                    exhibitions[record.event.label].push(record.artwork.id)
                     has_results = true
                 })
 
@@ -359,7 +358,7 @@ export class ArtMenu {
         this.tap.make_request(
             `/api/corpus/${sender.tap.corpus_id}/Prize/`,
             'GET',
-            Object.assign({'page-size': 100, 'e_artwork.id': 'y', only: 'artwork.id,name', content_view: 'corpus_6328b1338170d921f63fc09d_buck_prizes'}, existing_artwork_filter),
+            Object.assign({'page-size': 100, 'e_artwork.id': 'y', only: 'artwork.id,name', 'f_project.id': this.tap.projects.buck}, existing_artwork_filter),
             function(data) {
                 let prizes = {}
                 let list = jQuery('#tap-artmenu-prize-list')
