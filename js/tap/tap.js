@@ -252,15 +252,15 @@ export class TexasArtProject {
                   ${artwork.alt_title ? `<dt>Alternate Title</dt><dd>${artwork.alt_title}</dd>` : ''}
                   <dt>Creator:</dt><dd>${artwork.artists[0].label}</dd>
                   <dt>Year:</dt><dd>${artwork.year}</dd>
-                  ${artwork.location ? `<dt>Depicted Place:</dt><dd><a href="/?filter_label=Depicted Place&param=f_location.id&value_label=${artwork.location.label}&value=${artwork.location.id}">${artwork.location.label}</a></dd>` : ''}
+                  ${artwork.location ? `<dt>Depicted Place:</dt><dd><a href="/schiwetz/home/?filter_label=Depicted Place&param=f_location.id&value_label=${artwork.location.label}&value=${artwork.location.id}">${artwork.location.label}</a></dd>` : ''}
                   ${artwork.edition ? `<dt>Edition</dt><dd>${artwork.edition}</dd>` : ''}
                   ${tags.join('\n')}
-                  <dt>Medium:</dt><dd><a href="/?filter_label=Medium&param=f_medium&value_label=${artwork.medium}&value=${artwork.medium}">${artwork.medium}</a></dd>
-                  ${artwork.surface ? `<dt>Surface:</dt><dd><a href="/?filter_label=Surface&param=f_surface&value_label=${artwork.surface}&value=${artwork.surface}">${artwork.surface}</a></dd>` : ''}
+                  <dt>Medium:</dt><dd><a href="/schiwetz/home/?filter_label=Medium&param=f_medium&value_label=${artwork.medium}&value=${artwork.medium}">${artwork.medium}</a></dd>
+                  ${artwork.surface ? `<dt>Surface:</dt><dd><a href="/schiwetz/home/?filter_label=Surface&param=f_surface&value_label=${artwork.surface}&value=${artwork.surface}">${artwork.surface}</a></dd>` : ''}
                   <dt>Size:</dt><dd>${artwork.size_inches}</dd>
                   ${artwork.inscriptions ? `<dt>Inscriptions</dt><dd>${artwork.inscriptions}</dd>` : ''}
-                  ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_collection.id&value_label=${artwork.collection.label}&value=${artwork.collection.id}">${artwork.collection.label}</a></dd>` : ''}
-                  ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/?filter_label=Collection&param=f_anonymize_collector&value_label=Private Collection&value=true">Private Collection</a></dd>` : ''}
+                  ${artwork.collection && !artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/schiwetz/home/?filter_label=Collection&param=f_collection.id&value_label=${artwork.collection.label}&value=${artwork.collection.id}">${artwork.collection.label}</a></dd>` : ''}
+                  ${artwork.anonymize_collector ? `<dt>Collection:</dt><dd><a href="/schiwetz/home/?filter_label=Collection&param=f_anonymize_collector&value_label=Private Collection&value=true">Private Collection</a></dd>` : ''}
                 </dl>
                 
                 ${exhibits.length ? `
