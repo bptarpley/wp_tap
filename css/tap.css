@@ -12,7 +12,7 @@ body {
 }
 
 .tap-body {
-    max-width: min(100%, 1040px);
+    max-width: min(100%, 1140px);
     margin: 0 auto 0 auto;
 }
 
@@ -85,6 +85,20 @@ h2 {
     font-weight: normal!important;
     font-style: italic!important;
     font-size: 25px!important;
+}
+h2.multi-line {
+    line-height: 36px;
+}
+
+h3 {
+    font-family: abril-display, serif!important;
+    color: #000000!important;
+    font-weight: normal!important;
+    font-style: italic!important;
+    font-size: 18px!important;
+}
+h3.multi-line {
+    line-height: 26px;
 }
 
 .elementor-widget-text-editor {
