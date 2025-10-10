@@ -1,4 +1,4 @@
-import { ArtMenu } from './tap-art-menu.js'
+import { ArtMenu } from 'tap-art-menu'
 
 
 export class ArtMap {

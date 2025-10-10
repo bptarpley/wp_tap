@@ -5,7 +5,7 @@
  * Description: A plugin for allowing a Wordpress frontend to interface with Corpora
  * Author: Bryan Tarpley
  * Author URI: https://codhr.tamu.edu
- * Version: 1.0.0
+ * Version: 1.0.2
  * License: GPL2+
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
  *
@@ -35,6 +35,13 @@
 
 	function tap_corpora_enqueue_scripts()
 	{
+	    // Get plugin version for cache busting
+        if (!function_exists('get_plugin_data')) {
+            require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+        }
+        $plugin_data = get_plugin_data(__FILE__);
+        $plugin_version = $plugin_data['Version'];
+
 		// Register Javascript
 		wp_enqueue_script('jquery');
 		wp_enqueue_script('jquery-mark', plugin_dir_url(__FILE__).'js/jquery.mark.min.js');
@@ -52,7 +59,7 @@
 		wp_enqueue_style('tap-autocomplete-css', plugin_dir_url( __FILE__ ).'css/autoComplete.min.css');
 		wp_enqueue_style('tap-leaflet-css', plugin_dir_url( __FILE__ ).'css/leaflet/leaflet.css');
 		wp_enqueue_style('tap-leaflet-cluster-css', plugin_dir_url( __FILE__ ).'css/MarkerCluster.css');
-		wp_enqueue_style('tap-css', plugin_dir_url( __FILE__ ).'css/tap.css');
+		wp_enqueue_style('tap-css', plugin_dir_url( __FILE__ ).'css/tap.css', array(), $plugin_version);
 	}
 
 	function tap_corpora_inject_footer()
@@ -64,11 +71,36 @@
 	    $corpora_token = getenv('TAP_TOKEN');
 	    $plugin_path = plugin_dir_url( __FILE__ );
 
+	    // Get plugin version for cache busting
+        if (!function_exists('get_plugin_data')) {
+            require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+        }
+        $plugin_data = get_plugin_data(__FILE__);
+        $plugin_version = $plugin_data['Version'];
+
 	    if (!$corpora_token) {
 	        $corpora_token = '';
 	    }
 
 ?>
+        <script type="importmap">
+            {
+              "imports": {
+                "tap": "<?=$plugin_path?>/js/tap/tap.js?v=<?=$plugin_version?>",
+                "tap-site-header": "<?=$plugin_path?>/js/tap/tap-site-header.js?v=<?=$plugin_version?>",
+                "tap-header-image": "<?=$plugin_path?>/js/tap/tap-header-image.js?v=<?=$plugin_version?>",
+                "tap-art-grid": "<?=$plugin_path?>/js/tap/tap-art-grid.js?v=<?=$plugin_version?>",
+                "tap-art-menu": "<?=$plugin_path?>/js/tap/tap-art-menu.js?v=<?=$plugin_version?>",
+                "tap-art-map": "<?=$plugin_path?>/js/tap/tap-art-map.js?v=<?=$plugin_version?>",
+                "tap-art-detail": "<?=$plugin_path?>/js/tap/tap-art-detail.js?v=<?=$plugin_version?>",
+                "tap-ephemera-menu": "<?=$plugin_path?>/js/tap/tap-ephemera-menu.js?v=<?=$plugin_version?>",
+                "tap-ephemera-grid": "<?=$plugin_path?>/js/tap/tap-ephemera-grid.js?v=<?=$plugin_version?>",
+                "tap-ephemera-timeline": "<?=$plugin_path?>/js/tap/tap-ephemera-timeline.js?v=<?=$plugin_version?>",
+                "tap-ephemera-detail": "<?=$plugin_path?>/js/tap/tap-ephemera-detail.js?v=<?=$plugin_version?>",
+                "tap-art-footer": "<?=$plugin_path?>/js/tap/tap-art-footer.js?v=<?=$plugin_version?>"
+              }
+            }
+        </script>
 		<script type="module">
             import { TexasArtProject } from '<?=$plugin_path?>js/tap/tap.js'
 		    window.tap = null
