@@ -11,6 +11,16 @@ body {
     background-color: #FFFFFF!important;
 }
 
+.tap-body {
+    max-width: min(100%, 1040px);
+    margin: 0 auto 0 auto;
+}
+
+#tap-header-div > nav {
+    background-color: #FFFFFF !important;
+    flex-grow: 1;
+}
+
 p {
     font-size: 18px;
 }
@@ -84,6 +94,24 @@ h2 {
     color: #000000!important;
 }
 
+.tap-byline-description {
+    padding: 0 150px;
+}
+
+figure {
+    padding: 10px 10px 0 10px;
+    background-color: #F4F4F4;
+}
+figcaption {
+    padding-bottom: 10px;
+    margin-top: 0 !important;
+    text-align: center;
+    background-color: #F4F4F4;
+    font-family: abril-display, serif !important;
+    font-size: 0.688rem !important;
+    color: #000000 !important;
+}
+
 blockquote {
     background-color: #F2F2F2;
     padding: 20px;
@@ -93,7 +121,6 @@ blockquote {
     margin-right: 10px!important;
     position: relative;
 }
-
 blockquote::before {
     content: "\201C";
     font-size: 4em;
@@ -102,6 +129,7 @@ blockquote::before {
     top: 0px;
     color: #D6D6D6;
 }
+blockquote p { margin-bottom: 0 !important; }
 
 a {
     color: #000000!important;
@@ -405,7 +433,9 @@ button.nav-link:focus {
 }
 
 #tap-artwork-detail-div, #tap-ephemera-detail-div {
+    display: flex;
     background-color: #f4f4f4;
+    height: 100vh;
 }
 
 #tap-artdetail-image-div {
@@ -425,6 +455,7 @@ button.nav-link:focus {
 
 #tap-footer-row {
     flex-direction: row;
+    flex-grow: 1;
 }
 
 .tap-footer-cell {
@@ -464,12 +495,12 @@ button.nav-link:focus {
     color: #008DAB!important;
 }
 
-.tap-footnote-div {
+.tap-footnote-div p {
     font-size: 16px;
     margin-bottom: 20px;
 }
 
-.tap-footnote-marker {
+.tap-footnote {
     text-decoration: none!important;
     color: #008DAB!important;
     font-weight: bold;

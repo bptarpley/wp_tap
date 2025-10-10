@@ -63,6 +63,8 @@ export class EphemeraTimeline {
                     eventInfo.records.forEach(event => {
                         this.events[event.id] = event
 
+                        // todo: Determine event type. If event type is exhibit, only add agents who are "Artists"
+
                         let agentDivs = []
                         event.agents.forEach(agentStub => {
                             let agentColor = this.getAgentColor()
@@ -239,7 +241,8 @@ export class EphemeraTimeline {
                 .then(artInfo => {
                     if (artInfo.records) {
                         artInfo.records.forEach(art => {
-                            // #todo: ask if postcard "counts" toward agent markers
+                            // todo: add "Featured" field to Document, set to True for all postcards, rely on that to determine whether it's that event's postcard
+
                             if (art.media_type && art.media_type.name === 'Postcard') event.postcardID = art.id
                             else if (art.agents) {
                                 art.agents.forEach(agent => {
