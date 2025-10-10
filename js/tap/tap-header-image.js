@@ -11,6 +11,10 @@ export class HeaderImage {
                 src: `${this.tap.plugin_url}/img/about-us.png`,
                 alt: "About Us"
             },
+            '/events/': {
+                src: `${this.tap.plugin_url}/img/events.png`,
+                alt: "Events"
+            },
             '/contact/': {
                 src: `${this.tap.plugin_url}/img/contact-us.png`,
                 alt: "Contact Us"
