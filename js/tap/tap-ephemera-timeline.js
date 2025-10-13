@@ -62,8 +62,9 @@ export class EphemeraTimeline {
                 if (eventInfo.records) {
                     eventInfo.records.forEach(event => {
                         this.events[event.id] = event
-
-                        // todo: Determine event type. If event type is exhibit, only add agents who are "Artists"
+                        if (this.events[event.id].event_type && this.events[event.id].event_type.name) {
+                            this.events[event.id].event_type = this.events[event.id].event_type.name
+                        }
 
                         let agentDivs = []
                         event.agents.forEach(agentStub => {
@@ -187,17 +188,16 @@ export class EphemeraTimeline {
 
             agentInfo.records.forEach(a => {
                 this.agents[a.id] = a
+                if (this.agents[a.id].role && this.agents[a.id].role.name) this.agents[a.id].role = this.agents[a.id].role.name
             })
         }
 
         event.agents.forEach(agentStub => {
             let agent = this.agents[agentStub.id]
             let agentDiv = jQuery(`#ephemera-timeline-event-${eventID}-agent-${agent.id}`)
-            let role = null
 
             if (agentDiv.length) {
-                if (agent.role && agent.role.name) role = agent.role.name
-                if (role === 'DWG Director') {
+                if (agent.role === 'DWG Director') {
                     let headerDiv = jQuery(`#ephemera-timeline-header-${eventID}`)
                     headerDiv.html(`
                         <h3 style="width: 50%" class="ephemera-timeline-header-director">${agent.person.name}</h3>
@@ -206,23 +206,24 @@ export class EphemeraTimeline {
                     headerDiv.removeClass('d-none')
                     eventDiv.addClass('beneath-header')
                 }
-
-                agentDiv.html(`
-                    <div class="event-agent-name">
-                        ${agent.person.name}
-                    </div>
-                    <div id="event-${event.id}-agent-${agentStub.id}-artifact-marker-holder" class="artifact-marker-holder">
-                        <svg id="event-${event.id}-agent-${agentStub.id}-artifact-tray-expander" class="artifact-tray-expander d-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5.91 4.57">
-                            <g style="isolation: isolate;">
-                                <g style="mix-blend-mode: multiply;">
-                                    <path style="fill: ${agentDiv.data('agent-color')}; stroke-width: 0px;"
-                                        d="M3.73,4.57h-1.54L0,0h1.41l1.51,3.32h.09l1.5-3.32h1.41l-2.18,4.57Z"/>
+                else if (event.event_type !== 'Exhibit' || (event.event_type === 'Exhibit' && agent.role === 'Artist')) {
+                    agentDiv.html(`
+                        <div class="event-agent-name">
+                            ${agent.person.name}
+                        </div>
+                        <div id="event-${event.id}-agent-${agentStub.id}-artifact-marker-holder" class="artifact-marker-holder">
+                            <svg id="event-${event.id}-agent-${agentStub.id}-artifact-tray-expander" class="artifact-tray-expander d-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5.91 4.57">
+                                <g style="isolation: isolate;">
+                                    <g style="mix-blend-mode: multiply;">
+                                        <path style="fill: ${agentDiv.data('agent-color')}; stroke-width: 0px;"
+                                            d="M3.73,4.57h-1.54L0,0h1.41l1.51,3.32h.09l1.5-3.32h1.41l-2.18,4.57Z"/>
+                                    </g>
                                 </g>
-                            </g>
-                        </svg>
-                    </div>
-                `)
-                agentDiv.removeClass('d-none')
+                            </svg>
+                        </div>
+                    `)
+                    agentDiv.removeClass('d-none')
+                }
             }
         })
 
