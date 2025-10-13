@@ -92,13 +92,13 @@ h2.multi-line {
 }
 
 h3 {
-    font-family: abril-display, serif!important;
-    color: #000000!important;
-    font-weight: bold!important;
-    font-size: 18px!important;
+    font-family: abril-display, serif;
+    color: #000000;
 }
 h3.multi-line {
     line-height: 26px;
+    font-weight: bold;
+    font-size: 18px;
 }
 
 .elementor-widget-text-editor {
