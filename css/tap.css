@@ -63,6 +63,7 @@ p {
     color: #008dab!important;
     text-decoration: underline!important;
     text-underline-offset: 10px!important;
+    background-color: unset!important;
 }
 
 .tap-header-image {

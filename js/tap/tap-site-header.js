@@ -29,6 +29,11 @@ export class SiteHeader {
                       <a class="dropdown-item" href="/schiwetz/essay/">Introductory Essay</a>
                       <a class="dropdown-item" href="/schiwetz/home/">Gallery</a>
                       <a class="dropdown-item" href="/schiwetz/map/">Map and Timeline</a>
+                      
+                      <b>Dallas Women's Gallery</b>
+                      <hr class="dropdown-divider">
+                      <a class="dropdown-item" href="/dwg/">Ephemera Database</a>
+                      <a class="dropdown-item" href="/dwg-timeline/">Interactive Timeline</a>
                     </div>
                   </li>
                   <li class="nav-item">
