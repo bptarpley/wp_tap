@@ -213,8 +213,11 @@ details ul li:hover {
 
 /* TIMELINE STYLING */
 #tap-ephemera-timeline {
+    display: flex;
+    flex-direction: column;
     min-width: 1000px;
     max-width: 1300px;
+    margin-bottom: 50px;
 }
 
 #tap-ephemera-timeline h3 {
@@ -231,7 +234,14 @@ details ul li:hover {
     width: 100%;
     top: 0;
     background-color: #F2EFE8;
-    z-index: 500;
+    z-index: 800;
+}
+
+#ephemera-timeline-filter-indicator {
+    margin-left: 20px;
+}
+.ephemera-timeline-filter {
+    font-size: 16px;
 }
 
 #ephemera-timeline-top-bar-info-container {
@@ -242,10 +252,11 @@ details ul li:hover {
     align-items: center;
 }
 
-#ephemera-timeline-top-bar-year {
+#ephemera-timeline-top-bar-year-menu {
     position: absolute;
     transform: translateX(-50%);
     left: 50%;
+    cursor: pointer;
 }
 
 #ephemera-timeline-top-bar-title {
@@ -368,11 +379,9 @@ details ul li:hover {
     font-family: Inter, sans-serif;
     font-size: 14pt;
     color: #59554D;
-}
-
-.event-agent-name {
     text-align: right;
     margin-right: 20px;
+    cursor: pointer;
 }
 
 .artifact-marker-holder {
