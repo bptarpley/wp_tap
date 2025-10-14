@@ -59,7 +59,7 @@ p {
     margin-left: 10px;
 }
 
-#tap-navbar a:hover, #tap-nav-div a.active {
+#tap-navbar a:hover, #tap-nav-div a.active, .dropdown-menu a:hover, .dropdown-menu button:hover {
     color: #008dab!important;
     text-decoration: underline!important;
     text-underline-offset: 10px!important;
