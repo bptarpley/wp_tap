@@ -32,8 +32,9 @@ export class SiteHeader {
                       
                       <b>Dallas Women's Gallery</b>
                       <hr class="dropdown-divider">
-                      <a class="dropdown-item" href="/dwg/">Ephemera Database</a>
-                      <a class="dropdown-item" href="/dwg-timeline/">Interactive Timeline</a>
+                      <a class="dropdown-item" href="/dwg">Home</a>
+                      <a class="dropdown-item" href="/dwg/ephemera">Ephemera Database</a>
+                      <a class="dropdown-item" href="/dwg/timeline">Interactive Timeline</a>
                     </div>
                   </li>
                   <li class="nav-item">

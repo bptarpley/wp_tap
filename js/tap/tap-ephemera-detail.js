@@ -63,25 +63,25 @@ export class EphemeraDetail {
                             if (exhibitInfo.records) {
                                 let exhibitLabel = 'Exhibit'
                                 if (exhibitInfo.records.length > 1) exhibitLabel += 's'
-                                let exhibitLinks = exhibitInfo.records.map(ex => `<a href="/dwg?facet=exhibits&value=${ex.id}">${ex.label}</a>`)
+                                let exhibitLinks = exhibitInfo.records.map(ex => `<a href="/dwg/ephemera?facet=exhibits&value=${ex.id}">${ex.label}</a>`)
 
                                 metas.push(`<dt>${exhibitLabel}:</dt><dd>${exhibitLinks.join('<br />')}</dd>`)
                             }
 
                             if (art.agents.length) {
-                                let peopleLinks = art.agents.map(agent => `<a href="/dwg?facet=agents&value=${agent.id}">${agent.label}</a>`)
+                                let peopleLinks = art.agents.map(agent => `<a href="/dwg/ephemera?facet=agents&value=${agent.id}">${agent.label}</a>`)
                                 metas.push(`<dt>People:</dt><dd>${peopleLinks.join('<br />')}</dd>`)
                             }
 
-                            if (art.collection) metas.push(`<dt>Collection:</dt><dd><a href="/dwg?facet=collections&value=${art.collection.id}">${art.collection.label}</a></dd>`)
-                            if (art.media_type) metas.push(`<dt>Media Type:</dt><dd><a href="/dwg?facet=media&value=${art.media_type.id}">${art.media_type.label}</a></dd>`)
+                            if (art.collection) metas.push(`<dt>Collection:</dt><dd><a href="/dwg/ephemera?facet=collections&value=${art.collection.id}">${art.collection.label}</a></dd>`)
+                            if (art.media_type) metas.push(`<dt>Media Type:</dt><dd><a href="/dwg/ephemera?facet=media&value=${art.media_type.id}">${art.media_type.label}</a></dd>`)
 
                             if (art.themes.length) {
-                                let themeLinks = art.themes.map(theme => `<a href="/dwg?facet=themes&value=${theme.id}">${theme.label}</a>`)
+                                let themeLinks = art.themes.map(theme => `<a href="/dwg/ephemera?facet=themes&value=${theme.id}">${theme.label}</a>`)
                                 metas.push(`<dt>Themes:</dt><dd>${themeLinks.join('<br />')}</dd>`)
                             }
 
-                            if (art.year) metas.push(`<dt>Year:</dt><dd><a href="/dwg?facet=years&value=${art.year}">${art.year}</a></dd>`)
+                            if (art.year) metas.push(`<dt>Year:</dt><dd><a href="/dwg/ephemera?facet=years&value=${art.year}">${art.year}</a></dd>`)
 
                             this.metaDiv.append(`
                                 <dl>

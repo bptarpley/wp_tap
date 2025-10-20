@@ -19,6 +19,10 @@ export class HeaderImage {
                 src: `${this.tap.plugin_url}/img/contact-us.png`,
                 alt: "Contact Us"
             },
+            '/dwg/': {
+                src: `${this.tap.plugin_url}/img/dwg-header.png`,
+                alt: "Dallas Women's Gallery"
+            },
             '/schiwetz/gallery/': {
                 src: `${this.tap.plugin_url}/img/home-collage.png`,
                 alt: "The Buck Schiwetz Gallery"

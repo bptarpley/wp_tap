@@ -74,95 +74,9 @@ export class EphemeraGrid {
                                 })
                         }
                     }
-
-                    /*
-                    if (!img.data('loaded')) {
-                        let img_rect = entry.target.getBoundingClientRect()
-                        let img_width = parseInt(img_rect.width)
-
-                        if (img.data('region')) {
-                            sender.tap.render_image(img, img_width)
-                        } else {
-                            sender.tap.inject_iiif_info(img, function() {
-                                sender.tap.render_image(img, img_width)
-                            })
-                        }
-                    }
-                     */
                 }
             })
         }, {threshold: 0.3})
-
-        /*
-        jQuery(document).on('click', '.tap-artgrid-img', function() {
-            jQuery('#detail-modal').modal('show')
-            let cell = jQuery(this)
-            let artID = cell.data('artifact-id')
-            let modalBody = jQuery('#detail-modal-body')
-            let dragonDiv = jQuery('#detail-modal-dragon')
-            let metaDiv = jQuery('#detail-modal-metadata')
-            let art = sender.artifacts.byID[artID]
-            let dragonHeight = modalBody.height()
-            let iiifIdentifiers = []
-
-            Object.keys(art.pages).forEach(refNo => {
-                Object.keys(art.pages[refNo].files).forEach(fileKey => {
-                    let imgPath = art.pages[refNo].files[fileKey].path
-                    iiifIdentifiers.push(`${sender.tap.host}/iiif/2${imgPath}/info.json`)
-                })
-            })
-
-            if (iiifIdentifiers) {
-                console.log('opening dragon...')
-                console.log(iiifIdentifiers)
-
-                dragonDiv[0].style.height = `${dragonHeight}px`
-
-                if (sender.dragon) sender.dragon.destroy()
-
-                sender.dragon = OpenSeadragon({
-                    id:                 "detail-modal-dragon",
-                    prefixUrl:          '/js/openseadragon/images/',
-                    preserveViewport:   false,
-                    visibilityRatio:    1,
-                    minZoomLevel:       .25,
-                    maxZoomLevel:       15,
-                    defaultZoomLevel:   0,
-                    homeFillsViewer:    false,
-                    showRotationControl: true,
-                    tileSources:   iiifIdentifiers,
-                    sequenceMode: true,
-                    showReferenceStrip: true,
-                    referenceStripScroll: 'horizontal',
-                })
-            }
-
-            metaDiv.empty()
-
-            Object.keys(art.facets).forEach(facet => {
-                let label = sender.tap.artmenu.facets[facet].label
-                let vals = []
-
-                art.facets[facet].forEach(facetID => {
-                    let filterLabel = sender.tap.artmenu.facets[facet].byID[facetID].label
-                    let param = facet
-                    let value = facetID
-                    vals.push(`<a href="/?facet=${facet}&value=${value}">${filterLabel}</a>`)
-                })
-
-                metaDiv.append(`
-                    <div>
-                        <b>${label}</b><br />
-                        ${vals.join('<br />')}
-                    </div>
-                `)
-            })
-            metaDiv.css({
-                'max-height': `${dragonHeight}px`,
-                'overflow-y': 'scroll'
-            })
-        })
-         */
     }
 
     load_images() {
@@ -172,11 +86,7 @@ export class EphemeraGrid {
         sender.artifacts.sortedIDs.forEach(artID => {
             if (sender.artifacts.selectedIDs.has(artID) || sender.artifacts.selectedIDs.size === 0) {
                 let art_region = null
-                /*
-                if (artwork.hasOwnProperty('featured_region_x') && artwork.featured_region_x) {
-                    art_region = `${artwork.featured_region_x},${artwork.featured_region_y},${artwork.featured_region_width},${artwork.featured_region_width}`;
-                }
-                */
+
                 sender.element.append(`
                 <div id="tap-artgrid-cell-${artID}" class="col-md-4 tap-artgrid-cell" data-artifact-id="${artID}">
                   <a href="/ephemera-detail/${artID}/" target="_blank">
