@@ -301,7 +301,7 @@ details ul li:hover {
 
 .ephemera-timeline-event-header-artists-container {
     display: grid;
-    grid-template-rows: 65px 1fr 40px;
+    grid-template-rows: auto 1fr auto;
     height: 100%;
     width: 100%;
 }
@@ -313,7 +313,8 @@ details ul li:hover {
     width: 100%;
     mix-blend-mode: multiply;
     background-color: #F2EFE8;
-    align-items: center;
+    align-items: start;
+    padding: 10px 0;
 }
 
 .event-header-title-column, .event-header-date-column {
@@ -329,6 +330,7 @@ details ul li:hover {
 .event-header-title-column {
     align-items: start;
     margin-left: 10px;
+    padding-right: 20px;
 }
 
 .event-header-date-column span, .event-header-title-column span {
@@ -433,5 +435,13 @@ details ul li:hover {
 .ephemera-timeline-event-header-artists-footer {
     background-color: #F2EFE8;
     mix-blend-mode: multiply;
+    height: 40px;
+}
 
+.admin-event {
+    background-color: rgba(186, 184, 178, .5);
+}
+.no-agents {
+    height: 0;
+    padding: 0;
 }
