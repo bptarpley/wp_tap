@@ -51,7 +51,7 @@ export class EphemeraTimeline {
                         <div id="ephemera-timeline-year-selector" class="dropdown-menu">
                         </div>
                     </div>
-                    <h3 id="ephemera-timeline-top-bar-title">TBD</h3>
+                    <h3 id="ephemera-timeline-top-bar-title"></h3>
                 </div>
             </div>
         `)
