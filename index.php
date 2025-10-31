@@ -5,7 +5,7 @@
  * Description: A plugin for allowing a Wordpress frontend to interface with Corpora
  * Author: Bryan Tarpley
  * Author URI: https://codhr.tamu.edu
- * Version: 1.0.7
+ * Version: 1.0.8
  * License: GPL2+
  * License URI: https://www.gnu.org/licenses/gpl-2.0.txt
  *
