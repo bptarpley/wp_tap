@@ -3,10 +3,10 @@ export class HeaderImage {
         this.tap = tap_instance
         this.element = element
         this.headers = {
-            '/': {
+            /*'/': {
                 src: `${this.tap.plugin_url}/img/home-collage.png`,
                 alt: "The Texas Art Project"
-            },
+            },*/
             '/about/': {
                 src: `${this.tap.plugin_url}/img/about-us.png`,
                 alt: "About Us"
