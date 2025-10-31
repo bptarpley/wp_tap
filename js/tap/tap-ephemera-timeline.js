@@ -2,17 +2,11 @@ export class EphemeraTimeline {
     constructor(tap_instance, element) {
         this.tap = tap_instance
         this.element = element
-        this.currentEra = 1
-        this.currentDirector = ''
-        this.currentYear = ''
         this.eventObserver = null
         this.visibleEvents = new Set()
         this.navigating = false
 
-        this.filteredPersonID = null
         this.filteredAgentIDs = []
-        this.filteredEventIDs = []
-
         this.events = {}
         this.agents = {}
         this.artifacts = {}
@@ -99,7 +93,7 @@ export class EphemeraTimeline {
             'e_timespan.start=y',
             's_timespan.start=asc',
             'page-size=2000',
-            'only=id,title,event_type.name,year,timespan,opening,agents.id,artifacts.id,location.name,location.coordinates',
+            'only=id,title,event_type.name,year,timespan,opening,agents.id,artifacts.id,location.name',
             `f_project.id=${this.tap.projects.dwg}`
         ]
         fetch(`${this.tap.host}/api/corpus/${this.tap.corpus_id}/Event/?${eventQueryParams.join('&')}`)
@@ -141,7 +135,10 @@ export class EphemeraTimeline {
 
                         if (adminEvent || agentDivs.length) {
                             this.element.append(`
-                                <div id="ephemera-timeline-header-${event.id}" class="ephemera-timeline-header d-none" style="background: ${this.generateBackgroundStripes(adminEvent)}"></div>
+                                <div id="ephemera-timeline-header-${event.id}" class="ephemera-timeline-header d-none" style="background: ${this.generateBackgroundStripes(adminEvent)}">
+                                    <h3 id="ephemera-timeline-header-director-${event.id}" style="width: 50%" class="ephemera-timeline-header-director"></h3>
+                                    <h3 id="ephemera-timeline-header-address-${event.id}" style="width: 25%" class="ephemera-timeline-header-address"></h3>
+                                </div>
                                 <div id="ephemera-timeline-era-${event.id}" class="ephemera-timeline-era" style="background: ${this.generateBackgroundStripes(adminEvent)}">
                                     <div id="ephemera-timeline-event-${event.id}" class="ephemera-timeline-event skeleton" data-id="${event.id}" data-year="${event.year}">
                                         <div id="ephemera-timeline-event-body-${event.id}" class="ephemera-timeline-event-body">
@@ -167,6 +164,8 @@ export class EphemeraTimeline {
                                 `)
                             }
                         }
+
+                        if (['Administrative Changes', 'Gallery Expansion/Move'].includes(this.events[event.id].event_type)) this.constructEvent(event.id, true)
                     })
                     jQuery('.collapse').collapse({toggle: false})
                 }
@@ -193,7 +192,7 @@ export class EphemeraTimeline {
         })
     }
 
-    async constructEvent(eventID) {
+    async constructEvent(eventID, adminEvent=false) {
         let event = this.events[eventID]
         let eventDiv = jQuery(`#ephemera-timeline-event-${eventID}`)
         let eventHeader = jQuery(`#ephemera-timeline-event-header-${eventID}`)
@@ -205,6 +204,8 @@ export class EphemeraTimeline {
             let dateString = "Date Unknown"
             let opening = ''
             let guestCurators = []
+            let newGalleryDirector = ''
+            let newGalleryAddress = ''
 
             // try to construct event date
             try {
@@ -246,6 +247,11 @@ export class EphemeraTimeline {
                 }
             }
 
+            // try to determine gallery address
+            if (adminEvent && event.location) {
+                newGalleryAddress = event.location.name
+            }
+
             if (event.agents) {
                 event.agents.forEach(agent => {
                     if (!(agent.id in this.agents)) agentRequestIDs.push(agent.id)
@@ -269,14 +275,8 @@ export class EphemeraTimeline {
                     let agent = this.agents[agentStub.id]
 
                     // determine director
-                    if (agent.role === 'DWG Director') {
-                        let headerDiv = jQuery(`#ephemera-timeline-header-${eventID}`)
-                        headerDiv.html(`
-                                <h3 style="width: 50%" class="ephemera-timeline-header-director">${agent.person.name}</h3>
-                                <h3 style="width: 25%" class="ephemera-timeline-header-address">Address of Gallery</h3>
-                            `)
-                        headerDiv.removeClass('d-none')
-                        eventDiv.addClass('beneath-header')
+                    if (adminEvent && agent.role === 'DWG Director') {
+                        newGalleryDirector = agent.person.name
                     }
 
                     // determine if guest curator
@@ -318,6 +318,17 @@ export class EphemeraTimeline {
                     ${guestCurators.length ? `<span>Guest curator(s): ${guestCurators.join(', ')}</span>` : ''}
                 </div>
             `)
+
+            if (newGalleryDirector || newGalleryAddress) {
+                let headerDiv = jQuery(`#ephemera-timeline-header-${eventID}`)
+                let galleryDirectorDiv = jQuery(`#ephemera-timeline-header-director-${eventID}`)
+                let galleryAddressDiv = jQuery(`#ephemera-timeline-header-address-${eventID}`)
+
+                galleryDirectorDiv.html(newGalleryDirector)
+                galleryAddressDiv.html(newGalleryAddress)
+                headerDiv.removeClass('d-none')
+                eventDiv.addClass('beneath-header')
+            }
 
             // get what we can from listings of artifacts so we can at least know how many
             // each agent has and determine which one is the postcard.
