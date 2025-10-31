@@ -41,6 +41,14 @@ export class HeaderImage {
             this.element.append(`
                 <img class="tap-header-image" src="${this.headers[this.tap.path].src}" alt="${this.headers[this.tap.path].alt}" loading="lazy" border="0" />
             `)
+        } else {
+            Object.keys(this.headers).forEach(path => {
+                if (path.startsWith(this.tap.path)) {
+                    this.element.append(`
+                        <img class="tap-header-image" src="${this.headers[this.tap.path].src}" alt="${this.headers[this.tap.path].alt}" loading="lazy" border="0" />
+                    `)
+                }
+            })
         }
     }
 }
