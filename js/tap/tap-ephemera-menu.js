@@ -12,7 +12,7 @@ export class EphemeraMenu {
         // data structure for filtering
         this.facets = {
             exhibits: {
-                label: 'Exhibit',
+                label: 'Event',
                 byID: {},
                 sortedIDs: new Set(),
                 selectedIDs: new Set(),
@@ -79,7 +79,7 @@ export class EphemeraMenu {
                 </details>
                 
                 <details class="tap-artmenu-list">
-                  <summary>Exhibit</summary>
+                  <summary>Event</summary>
                   <ul id="tap-artmenu-exhibits-list" class="vertically-scroll"></ul>
                 </details>
                 
