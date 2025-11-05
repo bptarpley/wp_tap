@@ -95,7 +95,7 @@ export class ArtDetail {
                                             prefixUrl:          `${sender.tap.plugin_url}/js/openseadragon/images/`,
                                             preserveViewport:   false,
                                             visibilityRatio:    1,
-                                            minZoomLevel:       .50,
+                                            minZoomLevel:       null,//.50,
                                             maxZoomLevel:       15,
                                             defaultZoomLevel:   0,
                                             //homeFillsViewer:    true,
