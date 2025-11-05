@@ -34,44 +34,57 @@ export class EphemeraGrid {
             entries.forEach(entry => {
                 if (entry && entry.isIntersecting && entry.intersectionRatio >= 0.3) {
                     let img = jQuery(entry.target)
-                    let artID = img.data('artifact-id')
+                    let artKey = img.data('artifact-id')
+                    let [artCT, artID] = artKey.split('-')
 
-                    if (artID in sender.artifacts.byID) {
-                        let art = sender.artifacts.byID[artID]
-                        if (!art.hasOwnProperty('page_image')) {
-                            fetch(`${sender.tap.host}/api/corpus/${sender.tap.corpus_id}/Document/${artID}/?only=pages,uri`)
-                                .then(resp => resp.json())
-                                .then(artInfo => {
-                                    sender.artifacts.byID[artID].pages = artInfo.pages
+                    if (artKey in sender.artifacts.byID) {
+                        let art = sender.artifacts.byID[artKey]
+                        let img_bounds = entry.target.getBoundingClientRect()
+                        let target_width = parseInt(img_bounds.width)
+                        let target_height = parseInt(img_bounds.height)
 
-                                    if (artInfo.pages && ('1' in artInfo.pages) && ('files' in artInfo.pages['1'])) {
-                                        let file_keys = Object.keys(artInfo.pages['1'].files)
-                                        if (file_keys.length) {
-                                            let img_path = artInfo.pages['1'].files[file_keys[0]].path
-                                            let width = artInfo.pages['1'].files[file_keys[0]].width
-                                            let height = artInfo.pages['1'].files[file_keys[0]].height
-                                            let img_bounds = entry.target.getBoundingClientRect()
-                                            let target_width = parseInt(img_bounds.width)
-                                            let target_height = parseInt(img_bounds.height)
-                                            let iiifIdentifier = `${sender.tap.host}/iiif/2${img_path}`
-                                            let imgSrc = `${iiifIdentifier}/full/max/0/default.png`
+                        if (artCT === 'Document') {
+                            if (!art.hasOwnProperty('page_image')) {
+                                fetch(`${sender.tap.host}/api/corpus/${sender.tap.corpus_id}/Document/${artID}/?only=pages,uri`)
+                                    .then(resp => resp.json())
+                                    .then(artInfo => {
+                                        sender.artifacts.byID[artKey].pages = artInfo.pages
 
-                                            if (width > height) {
-                                                if (height > target_height) {
-                                                    imgSrc = `${iiifIdentifier}/0,0,${height},${height}/,${target_height}/0/default.png`
-                                                }
-                                            } else {
-                                                if (width > target_width) {
-                                                    imgSrc = `${iiifIdentifier}/0,0,${width},${width}/${target_width},/0/default.png`
-                                                }
+                                        if (artInfo.pages && ('1' in artInfo.pages) && ('files' in artInfo.pages['1'])) {
+                                            let file_keys = Object.keys(artInfo.pages['1'].files)
+                                            if (file_keys.length) {
+                                                let img_path = artInfo.pages['1'].files[file_keys[0]].path
+                                                let width = artInfo.pages['1'].files[file_keys[0]].width
+                                                let height = artInfo.pages['1'].files[file_keys[0]].height
+                                                let iiifIdentifier = `${sender.tap.host}/iiif/2${img_path}`
+
+                                                sender.showImage(
+                                                    img,
+                                                    iiifIdentifier,
+                                                    width,
+                                                    height,
+                                                    target_width,
+                                                    target_height,
+                                                )
                                             }
-
-                                            img.data('iiif-identifier', iiifIdentifier)
-                                            img.attr('src', imgSrc)
                                         }
-                                        // get the file path and format accordingly: https://corpora.dh.tamu.edu/iiif/2/corpora/6328b1338170d921f63fc09d/Document/ed08/668dae6e92198acb28ed08fe/pages/1/dwg_dpl022_1.png/full/max/0/default.png
-                                    }
-                                })
+                                    })
+                            }
+                        } else if (artCT === 'ArtWork') {
+                            if (art.iiif_uri) {
+                                fetch(`${art.iiif_uri}/info.json`)
+                                    .then(resp => resp.json())
+                                    .then(iiifInfo => {
+                                        sender.showImage(
+                                            img,
+                                            art.iiif_uri,
+                                            iiifInfo.width,
+                                            iiifInfo.height,
+                                            target_width,
+                                            target_height
+                                        )
+                                    })
+                            }
                         }
                     }
                 }
@@ -79,28 +92,49 @@ export class EphemeraGrid {
         }, {threshold: 0.3})
     }
 
+    showImage(img, iiifIdentifier, width, height, target_width, target_height) {
+        let imgSrc = `${iiifIdentifier}/full/max/0/default.png`
+
+        if (width > height) {
+            if (height > target_height) {
+                imgSrc = `${iiifIdentifier}/0,0,${height},${height}/,${target_height}/0/default.png`
+            }
+        } else {
+            if (width > target_width) {
+                imgSrc = `${iiifIdentifier}/0,0,${width},${width}/${target_width},/0/default.png`
+            }
+        }
+
+        img.data('iiif-identifier', iiifIdentifier)
+        img.attr('src', imgSrc)
+    }
+
     load_images() {
         let sender = this
         sender.element.empty()
 
-        sender.artifacts.sortedIDs.forEach(artID => {
-            if (sender.artifacts.selectedIDs.has(artID) || sender.artifacts.selectedIDs.size === 0) {
+        sender.artifacts.sortedIDs.forEach(artKey => {
+            let [artCT, artID] = artKey.split('-')
+            let detailURL = `/ephemera-detail/${artID}/`
+            if (artCT === 'ArtWork') detailURL = `/artwork/${artID}/?filters=off`
+
+            if (sender.artifacts.selectedIDs.has(artKey) || sender.artifacts.selectedIDs.size === 0) {
                 let art_region = null
 
                 sender.element.append(`
-                <div id="tap-artgrid-cell-${artID}" class="col-md-4 tap-artgrid-cell" data-artifact-id="${artID}">
-                  <a href="/ephemera-detail/${artID}/" target="_blank">
-                      <img
-                        id="tap-artgrid-img-${artID}"
-                        src="${sender.tap.plugin_url}/img/image-loading.svg"
-                        class="tap-artgrid-img img-responsive"
-                        data-artifact-id="${artID}"
-                        data-iiif-identifier=""
-                        ${art_region ? `data-region="${art_region}"` : ''}
-                      />
-                  </a>
-                </div>
-            `)
+                    <div id="tap-artgrid-cell-${artKey}" class="col-md-4 tap-artgrid-cell" data-artifact-id="${artKey}">
+                      <a href="${detailURL}" target="_blank">
+                          <img
+                            id="tap-artgrid-img-${artKey}"
+                            src="${sender.tap.plugin_url}/img/image-loading.svg"
+                            class="tap-artgrid-img img-responsive"
+                            data-artifact-id="${artKey}"
+                            data-iiif-identifier=""
+                            ${art_region ? `data-region="${art_region}"` : ''}
+                          />
+                      </a>
+                    </div>
+                `)
             }
         })
 
