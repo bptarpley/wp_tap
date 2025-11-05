@@ -10,6 +10,7 @@ export class EphemeraTimeline {
         this.events = {}
         this.agents = {}
         this.artifacts = {}
+        this.artworks = {}
         this.years = []
 
         this.agentColors = [
@@ -89,88 +90,105 @@ export class EphemeraTimeline {
         this.setupEventObserver()
         let yearSelector = jQuery('#ephemera-timeline-year-selector')
 
-        let eventQueryParams = [
-            'e_timespan.start=y',
-            's_timespan.start=asc',
+        let artWorkParams = [
+            'e_iiif_uri=y',
             'page-size=2000',
-            'only=id,title,event_type.name,year,timespan,opening,agents.id,artifacts.id,location.name',
+            'only=artists.id,iiif_uri',
             `f_project.id=${this.tap.projects.dwg}`
         ]
-        fetch(`${this.tap.host}/api/corpus/${this.tap.corpus_id}/Event/?${eventQueryParams.join('&')}`)
+        fetch(`${this.tap.host}/api/corpus/${this.tap.corpus_id}/ArtWork/?${artWorkParams.join('&')}`)
             .then(response => response.json())
-            .then(eventInfo => {
-                if (eventInfo.records) {
-                    eventInfo.records.forEach(event => {
-                        this.events[event.id] = event
+            .then(artWorkInfo => {
 
-                        let adminEvent = true
-                        if (this.events[event.id].event_type && this.events[event.id].event_type.name) {
-                            this.events[event.id].event_type = this.events[event.id].event_type.name
-                        }
-                        if (this.events[event.id].event_type === 'Exhibit')  adminEvent = false
-                        this.events[event.id].adminEvent = adminEvent
+                artWorkInfo.records.forEach(artWork => {
+                    this.artworks[artWork.id] = artWork
+                })
 
-                        let agentDivs = []
-                        if (event.agents) {
-                            event.agents.forEach(agentStub => {
-                                if (this.filteredAgentIDs.length === 0 || this.filteredAgentIDs.includes(agentStub.id)) {
-                                    let agentColor = this.getAgentColor()
-                                    agentDivs.push(`
-                                        <div id="ephemera-timeline-event-${event.id}-agent-${agentStub.id}"
-                                            class="ephemera-timeline-event-agent d-none"
-                                            data-agent-color="${agentColor}"
-                                            style="background-color: ${agentColor};">
-                                        </div>
-                                        <div id="ephemera-timeline-event-${event.id}-agent-${agentStub.id}-gallery"
-                                            class="ephemera-timeline-event-agent-gallery collapse"
-                                            data-artifacts=""
-                                            style="background-color: ${agentColor};">
-                                            
-                                            <div class="gallery-placeholder"></div>
-                                        </div>
-                                    `)
+                let eventQueryParams = [
+                    'e_timespan.start=y',
+                    's_timespan.start=asc',
+                    'page-size=2000',
+                    'only=id,title,event_type.name,year,timespan,opening,agents.id,artifacts.id,location.name',
+                    `f_project.id=${this.tap.projects.dwg}`
+                ]
+                fetch(`${this.tap.host}/api/corpus/${this.tap.corpus_id}/Event/?${eventQueryParams.join('&')}`)
+                    .then(response => response.json())
+                    .then(eventInfo => {
+                        if (eventInfo.records) {
+                            eventInfo.records.forEach(event => {
+                                this.events[event.id] = event
+
+                                let adminEvent = true
+                                if (this.events[event.id].event_type && this.events[event.id].event_type.name) {
+                                    this.events[event.id].event_type = this.events[event.id].event_type.name
                                 }
-                            })
-                        }
+                                if (this.events[event.id].event_type === 'Exhibit') adminEvent = false
+                                this.events[event.id].adminEvent = adminEvent
 
-                        if (adminEvent || agentDivs.length) {
-                            this.element.append(`
-                                <div id="ephemera-timeline-header-${event.id}" class="ephemera-timeline-header d-none" style="background: ${this.generateBackgroundStripes(adminEvent)}">
-                                    <h3 id="ephemera-timeline-header-director-${event.id}" style="width: 50%" class="ephemera-timeline-header-director"></h3>
-                                    <h3 id="ephemera-timeline-header-address-${event.id}" style="width: 25%" class="ephemera-timeline-header-address"></h3>
-                                </div>
-                                <div id="ephemera-timeline-era-${event.id}" class="ephemera-timeline-era" style="background: ${this.generateBackgroundStripes(adminEvent)}">
-                                    <div id="ephemera-timeline-event-${event.id}" class="ephemera-timeline-event skeleton" data-id="${event.id}" data-year="${event.year}">
-                                        <div id="ephemera-timeline-event-body-${event.id}" class="ephemera-timeline-event-body">
-                                            <div id="ephemera-timeline-event-postcard-container-${event.id}" class="ephemera-timeline-event-postcard-container${adminEvent ? ' admin-event' : ''}"></div>
-                                            <div class="ephemera-timeline-event-header-artists-container">
-                                                <div id="ephemera-timeline-event-header-${event.id}" class="ephemera-timeline-event-header${adminEvent ? ' admin-event' : ''}"></div>
-                                                <div id="ephemera-timeline-event-artists-container-${event.id}" class="ephemera-timeline-event-artists-container${agentDivs.length ? '' : ' no-agents'}">
-                                                    ${agentDivs.join(' ')}
+                                let agentDivs = []
+                                if (event.agents) {
+                                    event.agents.forEach(agentStub => {
+                                        if (this.filteredAgentIDs.length === 0 || this.filteredAgentIDs.includes(agentStub.id)) {
+                                            let agentColor = this.getAgentColor()
+                                            agentDivs.push(`
+                                                <div id="ephemera-timeline-event-${event.id}-agent-${agentStub.id}"
+                                                    class="ephemera-timeline-event-agent d-none"
+                                                    data-agent-color="${agentColor}"
+                                                    style="background-color: ${agentColor};">
                                                 </div>
-                                                <div class="ephemera-timeline-event-header-artists-footer${adminEvent ? ' admin-event' : ''}${agentDivs.length ? '' : ' no-agents'}"></div>
+                                                <div id="ephemera-timeline-event-${event.id}-agent-${agentStub.id}-gallery"
+                                                    class="ephemera-timeline-event-agent-gallery collapse"
+                                                    data-artifacts=""
+                                                    data-artworks=""
+                                                    style="background-color: ${agentColor};">
+                                                    
+                                                    <div class="gallery-placeholder"></div>
+                                                </div>
+                                            `)
+                                        }
+                                    })
+                                }
+
+                                if (adminEvent || agentDivs.length) {
+                                    this.element.append(`
+                                        <div id="ephemera-timeline-header-${event.id}" class="ephemera-timeline-header d-none" style="background: ${this.generateBackgroundStripes(adminEvent)}">
+                                            <h3 id="ephemera-timeline-header-director-${event.id}" style="width: 50%" class="ephemera-timeline-header-director"></h3>
+                                            <h3 id="ephemera-timeline-header-address-${event.id}" style="width: 25%" class="ephemera-timeline-header-address"></h3>
+                                        </div>
+                                        <div id="ephemera-timeline-era-${event.id}" class="ephemera-timeline-era" style="background: ${this.generateBackgroundStripes(adminEvent)}">
+                                            <div id="ephemera-timeline-event-${event.id}" class="ephemera-timeline-event skeleton" data-id="${event.id}" data-year="${event.year}">
+                                                <div id="ephemera-timeline-event-body-${event.id}" class="ephemera-timeline-event-body">
+                                                    <div id="ephemera-timeline-event-postcard-container-${event.id}" class="ephemera-timeline-event-postcard-container${adminEvent ? ' admin-event' : ''}"></div>
+                                                    <div class="ephemera-timeline-event-header-artists-container">
+                                                        <div id="ephemera-timeline-event-header-${event.id}" class="ephemera-timeline-event-header${adminEvent ? ' admin-event' : ''}"></div>
+                                                        <div id="ephemera-timeline-event-artists-container-${event.id}" class="ephemera-timeline-event-artists-container${agentDivs.length ? '' : ' no-agents'}">
+                                                            ${agentDivs.join(' ')}
+                                                        </div>
+                                                        <div class="ephemera-timeline-event-header-artists-footer${adminEvent ? ' admin-event' : ''}${agentDivs.length ? '' : ' no-agents'}"></div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            `)
-                            this.eventObserver.observe(document.getElementById(`ephemera-timeline-event-${event.id}`))
+                                    `)
+                                    this.eventObserver.observe(document.getElementById(`ephemera-timeline-event-${event.id}`))
 
-                            // add event year to year selector
-                            if (event.year && !this.years.includes(event.year)) {
-                                this.years.push(event.year)
-                                yearSelector.append(`
-                                    <button class="dropdown-item year-selection" data-year="${event.year}">${event.year}</button>
-                                `)
-                            }
+                                    // add event year to year selector
+                                    if (event.year && !this.years.includes(event.year)) {
+                                        this.years.push(event.year)
+                                        yearSelector.append(`
+                                            <button class="dropdown-item year-selection" data-year="${event.year}">${event.year}</button>
+                                        `)
+                                    }
+                                }
+
+                                if (['Administrative Changes', 'Gallery Expansion/Move'].includes(this.events[event.id].event_type)) this.constructEvent(event.id, true)
+                            })
+                            jQuery('.collapse').collapse({toggle: false})
                         }
-
-                        if (['Administrative Changes', 'Gallery Expansion/Move'].includes(this.events[event.id].event_type)) this.constructEvent(event.id, true)
                     })
-                    jQuery('.collapse').collapse({toggle: false})
-                }
+                // end event fetch
             })
-        // end fetch
+        // end artwork fetch
     }
 
     setupEventObserver() {
@@ -338,7 +356,7 @@ export class EphemeraTimeline {
                 let artifactIDs = event.artifacts.map(artifactStub => artifactStub.id)
                 let artifactQueryParams = [
                     `f_id|=${artifactIDs.join('__')}`,
-                    `only=agents.id,media_type.name`
+                    `only=agents.id,media_type.name,associated_artworks.id`
                 ]
                 fetch(`${this.tap.host}/api/corpus/${this.tap.corpus_id}/Document/?${artifactQueryParams.join('&')}`)
                     .then(response => response.json())
@@ -353,6 +371,19 @@ export class EphemeraTimeline {
                                         this.addAgentArtfifactMarker(eventID, agent.id, art.id)
                                     })
                                 }
+
+                                if (art.associated_artworks) {
+                                    art.associated_artworks.forEach(artworkStub => {
+                                        if (artworkStub.id in this.artworks) {
+                                            let artwork = this.artworks[artworkStub.id]
+                                            if (artwork.artists) {
+                                                artwork.artists.forEach(artist => {
+                                                    this.addAgentArtfifactMarker(eventID, artist.id, artwork.id, artwork.iiif_uri)
+                                                })
+                                            }
+                                        }
+                                    })
+                                }
                             })
                         }
 
@@ -365,7 +396,7 @@ export class EphemeraTimeline {
         }
     }
 
-    addAgentArtfifactMarker(eventID, agentID, artifactID) {
+    addAgentArtfifactMarker(eventID, agentID, artifactID, iiif_uri=null) {
         let agentDiv = jQuery(`#ephemera-timeline-event-${eventID}-agent-${agentID}`)
         let gallery = jQuery(`#ephemera-timeline-event-${eventID}-agent-${agentID}-gallery`)
         let markerHolder = jQuery(`#event-${eventID}-agent-${agentID}-artifact-marker-holder`)
@@ -373,9 +404,17 @@ export class EphemeraTimeline {
 
         if (agentDiv.length) {
             let currentArts = gallery.data('artifacts').split(',').filter((e) => e.length)
+            let currentArtworks = gallery.data('artworks').split(',').filter((e) => e.length)
             let agentColor = agentDiv.data('agent-color')
-            currentArts.push(artifactID)
-            gallery.data('artifacts', currentArts.join(','))
+
+            if (iiif_uri) {
+                currentArtworks.push(artifactID)
+                gallery.data('artworks', currentArtworks.join(','))
+            }
+            else {
+                currentArts.push(artifactID)
+                gallery.data('artifacts', currentArts.join(','))
+            }
 
             markerHolder.append(`
                 <span class="artifact-marker" style="background-color: ${agentColor};"></span>
@@ -391,17 +430,31 @@ export class EphemeraTimeline {
 
                         let numCols = 3
                         let gapSize = 3
-                        let artIDs = gallery.data('artifacts').split(',').filter((e) => e.length)
-
-                        //if (artIDs.length < numCols) numCols = artIDs.length
                         let maxWidth = parseInt((gallery.width() - (gapSize * (numCols - 1))) / numCols)
 
+                        let artIDs = gallery.data('artifacts').split(',').filter((e) => e.length)
                         artIDs.forEach(artID => {
                             this.getArtifact(artID, (art) => {
                                 let imgInfo = this.getArtifactImage(art, maxWidth, null, true)
                                 if (imgInfo !== null) {
                                     gallery.append(`
                                         <a href="/ephemera-detail/${artID}/" target="_blank">
+                                            <img src="${imgInfo.src}" class="ephemera-thumbnail" data-event="${eventID}"
+                                                data-artifact="${artID}" />
+                                        </a>
+                                    `)
+                                    gallery.find('.gallery-placeholder').remove()
+                                }
+                            })
+                        })
+
+                        let artworkIDs = gallery.data('artworks').split(',').filter((e) => e.length)
+                        artworkIDs.forEach(artID => {
+                            this.getArtwork(artID, (artwork) => {
+                                let imgInfo = this.getArtifactImage(artwork, maxWidth, null, true)
+                                if (imgInfo !== null) {
+                                    gallery.append(`
+                                        <a href="/artwork/${artID}/?filters=off" target="_blank">
                                             <img src="${imgInfo.src}" class="ephemera-thumbnail" data-event="${eventID}"
                                                 data-artifact="${artID}" />
                                         </a>
@@ -462,44 +515,67 @@ export class EphemeraTimeline {
         } else callback(this.artifacts[artID])
     }
 
+    getArtwork(artID, callback) {
+        let artwork = this.artworks[artID]
+        if (!artwork.iiif_info) {
+            fetch(`${artwork.iiif_uri}/info.json`)
+                .then(resp => resp.json())
+                .then(iiifInfo => {
+                    artwork.iiif_info = iiifInfo
+                    callback(artwork)
+                })
+            // end fetch
+        } else callback(artwork)
+    }
+
     getArtifactImage(art, maxWidth=null, maxHeight=null, previewSquare=false) {
+        let iiifURI = null
+        let fileWidth = null
+        let fileHeight = null
+        let reqSize = 'full'
+        let reqRegion = 'full'
+
         if (art.pages) {
             if (art.pages['1']) {
                 if (art.pages['1'].files) {
                     let fileKeys = Object.keys(art.pages['1'].files)
                     if (fileKeys.length > 0) {
-                        let filePath = art.pages['1'].files[fileKeys[0]].path
-                        let fileWidth = art.pages['1'].files[fileKeys[0]].width
-                        let fileHeight = art.pages['1'].files[fileKeys[0]].height
-                        let reqSize = 'full'
-                        let reqRegion = 'full'
-
-                        if (maxWidth !== null && maxWidth <= fileWidth) {
-                            reqSize = `${maxWidth},`
-                            let ratio = maxWidth / fileWidth
-                            maxHeight = parseInt(fileHeight * ratio)
-                        }
-                        else if (maxHeight !== null && maxHeight <= fileHeight) {
-                            reqSize = `,${maxHeight}`
-                            let ratio = maxHeight / fileHeight
-                            maxWidth = parseInt(fileWidth * ratio)
-                        } else {
-                            maxWidth = fileWidth
-                            maxHeight = fileHeight
-                        }
-
-                        if (previewSquare) {
-                            if (fileWidth > fileHeight) reqRegion = `0,0,${fileHeight},${fileHeight}`
-                            else reqRegion = `0,0,${fileWidth},${fileWidth}`
-                        }
-
-                        return {
-                            src: `${this.tap.host}/iiif/2${filePath}/${reqRegion}/${reqSize}/0/default.png`,
-                            width: maxWidth,
-                            height: maxHeight
-                        }
+                        iiifURI = `${this.tap.host}/iiif/2${art.pages['1'].files[fileKeys[0]].path}`
+                        fileWidth = art.pages['1'].files[fileKeys[0]].width
+                        fileHeight = art.pages['1'].files[fileKeys[0]].height
                     }
                 }
+            }
+        } else if (art.iiif_uri && art.iiif_info) {
+            iiifURI = art.iiif_uri
+            fileWidth = art.iiif_info.width
+            fileHeight = art.iiif_info.height
+        }
+
+        if (iiifURI !== null) {
+            if (maxWidth !== null && maxWidth <= fileWidth) {
+                reqSize = `${maxWidth},`
+                let ratio = maxWidth / fileWidth
+                maxHeight = parseInt(fileHeight * ratio)
+            }
+            else if (maxHeight !== null && maxHeight <= fileHeight) {
+                reqSize = `,${maxHeight}`
+                let ratio = maxHeight / fileHeight
+                maxWidth = parseInt(fileWidth * ratio)
+            } else {
+                maxWidth = fileWidth
+                maxHeight = fileHeight
+            }
+
+            if (previewSquare) {
+                if (fileWidth > fileHeight) reqRegion = `0,0,${fileHeight},${fileHeight}`
+                else reqRegion = `0,0,${fileWidth},${fileWidth}`
+            }
+
+            return {
+                src: `${iiifURI}/${reqRegion}/${reqSize}/0/default.png`,
+                width: maxWidth,
+                height: maxHeight
             }
         }
         return null
@@ -553,8 +629,6 @@ export class EphemeraTimeline {
         let colors = ['#DDDDD5', '#C9C9C2']
         let color = '#C9C9C2'
         if (adminEvent) color = '#BAB8B2'
-
-        console.log(adminEvent)
 
         return `linear-gradient(
             to right,
