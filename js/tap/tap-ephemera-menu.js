@@ -166,6 +166,10 @@ export class EphemeraMenu {
                 sender.show_active_filters()
                 sender.populate_facet_lists(true)
                 sender.grid.load_images()
+
+                if (sender.tap.site_header.element.length) {
+                    sender.tap.site_header.element[0].scrollIntoView({behavior: 'smooth'})
+                }
             })
 
             // active filter deletion
@@ -195,6 +199,7 @@ export class EphemeraMenu {
 
     gather_facet_data() {
         let sender = this
+        let artworkMediaFacet = null
 
         // grab exhibit info
         let exParams = [
@@ -220,15 +225,16 @@ export class EphemeraMenu {
                 // grab artifact info
                 let docParams = [
                     'page-size=2000',
-                    'only=id,agents.id,agents.label,artifacts.id,collection,media_type,themes',
+                    'only=id,agents.id,agents.label,associated_artworks.id,collection,media_type,themes',
                     `f_project.id=${sender.tap.projects.dwg}`
                 ]
                 fetch(`${sender.tap.host}/api/corpus/${sender.tap.corpus_id}/Document/?${docParams.join('&')}`)
                     .then(response => response.json())
                     .then(docInfo => {
                         docInfo.records.forEach(doc => {
-                            sender.grid.artifacts.byID[doc.id] = doc
-                            sender.grid.artifacts.byID[doc.id]['facets'] = {
+                            let docKey = `Document-${doc.id}`
+                            sender.grid.artifacts.byID[docKey] = doc
+                            sender.grid.artifacts.byID[docKey]['facets'] = {
                                 exhibits: new Set(),
                                 agents: new Set(),
                                 collections: new Set(),
@@ -238,109 +244,168 @@ export class EphemeraMenu {
                             }
                         })
 
-                        // iterate over sorted exhibits in order to:
-                        // populate exhibit facet list
-                        // populate and cross-associate artifacts and agents
-                        sender.facets.exhibits.sortedIDs.forEach(ex_id => {
-                            let ex = sender.facets.exhibits.byID[ex_id]
+                        let artWorkParams = [
+                            'e_iiif_uri=y',
+                            'page-size=2000',
+                            'only=artists.id,artists.label,iiif_uri',
+                            `f_project.id=${sender.tap.projects.dwg}`
+                        ]
+                        fetch(`${sender.tap.host}/api/corpus/${sender.tap.corpus_id}/ArtWork/?${artWorkParams.join('&')}`)
+                            .then(response => response.json())
+                            .then(artWorkInfo => {
 
-                            // associate artifacts with exhibits
-                            if (ex.artifacts) {
-                                ex.artifacts.forEach(artInfo => {
-                                    if (artInfo.id in sender.grid.artifacts.byID) {
-                                        let art = sender.grid.artifacts.byID[artInfo.id]
-                                        sender.grid.artifacts.sortedIDs.add(art.id)
-                                        ex.artifactIDs.add(art.id)
-                                        art.facets.exhibits.add(ex.id)
-                                        if (ex.year) {
-                                            art.facets.years.add(ex.year)
-                                            sender.facets.years.byID[ex.year].artifactIDs.add(art.id)
+                                artWorkInfo.records.forEach(artWork => {
+                                    let artKey = `ArtWork-${artWork.id}`
+                                    sender.grid.artifacts.byID[artKey] = artWork
+                                    sender.grid.artifacts.byID[artKey]['facets'] = {
+                                        exhibits: new Set(),
+                                        agents: new Set(),
+                                        collections: new Set(),
+                                        media: new Set(),
+                                        themes: new Set(),
+                                        years: new Set(),
+                                    }
+
+                                    if (artWork.artists)
+                                        artWork.artists.forEach(artist => {
+                                            let agent = sender.getFacet('agents', artist)
+                                            agent.artifactIDs.add(artKey)
+                                            sender.grid.artifacts.byID[artKey].facets.agents.add(artist.id)
+                                        })
+                                })
+
+                                // iterate over sorted exhibits in order to:
+                                // populate exhibit facet list
+                                // populate and cross-associate artifacts and agents
+                                sender.facets.exhibits.sortedIDs.forEach(ex_id => {
+                                    let ex = sender.facets.exhibits.byID[ex_id]
+
+                                    // associate artifacts with exhibits
+                                    if (ex.artifacts) {
+                                        ex.artifacts.forEach(artInfo => {
+                                            let docKey = `Document-${artInfo.id}`
+
+                                            if (docKey in sender.grid.artifacts.byID) {
+                                                let art = sender.grid.artifacts.byID[docKey]
+                                                sender.grid.artifacts.sortedIDs.add(docKey)
+                                                ex.artifactIDs.add(docKey)
+                                                art.facets.exhibits.add(ex.id)
+
+                                                if (art.associated_artworks) {
+                                                    art.associated_artworks.forEach(artWorkStub => {
+                                                        let artKey = `ArtWork-${artWorkStub.id}`
+
+                                                        if (artKey in sender.grid.artifacts.byID) {
+                                                            let artWork = sender.grid.artifacts.byID[artKey]
+                                                            sender.grid.artifacts.sortedIDs.add(artKey)
+                                                            ex.artifactIDs.add(artKey)
+                                                            artWork.facets.exhibits.add(ex.id)
+                                                        }
+                                                    })
+                                                }
+
+                                                if (ex.year) {
+                                                    art.facets.years.add(ex.year)
+                                                    sender.facets.years.byID[ex.year].artifactIDs.add(docKey)
+
+                                                    if (art.associated_artworks) {
+                                                        art.associated_artworks.forEach(artwork => {
+                                                            let artKey = `ArtWork-${artwork.id}`
+                                                            if (artKey in sender.grid.artifacts.byID) {
+                                                                let artWork = sender.grid.artifacts.byID[artKey]
+                                                                sender.facets.years.byID[ex.year].artifactIDs.add(artKey)
+                                                            }
+                                                        })
+                                                    }
+                                                }
+                                            }
+                                        })
+                                        delete ex.artifacts
+                                    }
+
+                                    // associate artifacts with exhibit agents
+                                    if (ex.agents) {
+                                        ex.agents.forEach(agentInfo => {
+                                            let agent = sender.getFacet('agents', agentInfo)
+
+                                            ex.artifactIDs.forEach(artID => {
+                                                let art = sender.grid.artifacts.byID[artID]
+
+                                                if (artID.startsWith('Document')) {
+                                                    art.facets.agents.add(agent.id)
+                                                    agent.artifactIDs.add(artID)
+                                                }
+                                            })
+                                        })
+                                        delete ex.agents
+                                    }
+                                })
+
+                                // iterate over artifacts in order to:
+                                // populate and cross-associate agents, collections, media, and themes
+                                sender.grid.artifacts.sortedIDs.forEach(artID => {
+                                    let art = sender.grid.artifacts.byID[artID]
+
+                                    if (art.agents) {
+                                        art.agents.forEach(agentInfo => {
+                                            let agent = sender.getFacet('agents', agentInfo)
+                                            agent.artifactIDs.add(artID)
+                                            art.facets.agents.add(agentInfo.id)
+                                        })
+                                        delete art.agents
+                                    }
+
+                                    if (art.collection) {
+                                        let collection = sender.getFacet('collections', art.collection)
+                                        collection.artifactIDs.add(artID)
+                                        art.facets.collections.add(art.collection.id)
+                                        delete art.collection
+                                    }
+
+                                    if (art.media_type) {
+                                        let mediaType = sender.getFacet('media', art.media_type)
+                                        mediaType.artifactIDs.add(artID)
+                                        art.facets.media.add(art.media_type.id)
+                                        delete art.media_type
+
+                                        if (artworkMediaFacet === null && mediaType.label === 'Artwork') {
+                                            artworkMediaFacet = mediaType
                                         }
                                     }
-                                })
-                                delete ex.artifacts
-                            }
 
-                            // associate artifacts with exhibit agents
-                            if (ex.agents) {
-                                ex.agents.forEach(agentInfo => {
-                                    if (!(agentInfo.id in sender.facets.agents.byID)) {
-                                        sender.facets.agents.byID[agentInfo.id] = agentInfo
-                                        sender.facets.agents.byID[agentInfo.id]['artifactIDs'] = new Set()
+                                    if (art.themes) {
+                                        art.themes.forEach(themeInfo => {
+                                            let theme = sender.getFacet('themes', themeInfo)
+                                            theme.artifactIDs.add(artID)
+                                            art.facets.themes.add(theme.id)
+                                        })
+                                        delete art.themes
                                     }
-                                    let agent = sender.facets.agents.byID[agentInfo.id]
+                                })
 
-                                    ex.artifactIDs.forEach(artID => {
-                                        let art = sender.grid.artifacts.byID[artID]
-                                        art.facets.agents.add(agent.id)
-                                        agent.artifactIDs.add(artID)
+                                let dataTypesToSort = ['agents', 'collections', 'media', 'themes']
+                                dataTypesToSort.forEach(cachedDataType => {
+                                    sender.facets[cachedDataType].sortedIDs = new Set(sender.tap.sortObjectByKey(
+                                        sender.facets[cachedDataType].byID,
+                                        'label'
+                                    ))
+                                })
+
+                                // ensure all artworks get Artwork media_type assigned
+                                if (artworkMediaFacet !== null) {
+                                    sender.grid.artifacts.sortedIDs.forEach(artKey => {
+                                        if (artKey.startsWith('ArtWork')) {
+                                            let artWork = sender.grid.artifacts.byID[artKey]
+                                            artworkMediaFacet.artifactIDs.add(artKey)
+                                            artWork.facets.media.add(artworkMediaFacet.id)
+                                        }
                                     })
-                                })
-                                delete ex.agents
-                            }
-                        })
-
-                        // iterate over artifacts in order to:
-                        // populate and cross-associate agents, collections, media, and themes
-                        sender.grid.artifacts.sortedIDs.forEach(artID => {
-                            let art = sender.grid.artifacts.byID[artID]
-
-                            if (art.agents) {
-                                // noinspection JSVoidFunctionReturnValueUsed
-                                art.agents.forEach(agentInfo => {
-                                    if (!(agentInfo.id in sender.facets.agents.byID)) {
-                                        sender.facets.agents.byID[agentInfo.id] = agentInfo
-                                        sender.facets.agents.byID[agentInfo.id]['artifactIDs'] = new Set()
-                                    }
-                                    art.facets.agents.add(agentInfo.id)
-                                    sender.facets.agents.byID[agentInfo.id].artifactIDs.add(art.id)
-                                })
-                                delete art.agents
-                            }
-
-                            if (art.collection) {
-                                if (!(art.collection.id in sender.facets.collections.byID)) {
-                                    sender.facets.collections.byID[art.collection.id] = art.collection
-                                    sender.facets.collections.byID[art.collection.id]['artifactIDs'] = new Set()
                                 }
-                                sender.facets.collections.byID[art.collection.id].artifactIDs.add(art.id)
-                                art.facets.collections.add(art.collection.id)
-                                delete art.collection
-                            }
 
-                            if (art.media_type) {
-                                if (!(art.media_type.id in sender.facets.media.byID)) {
-                                    sender.facets.media.byID[art.media_type.id] = art.media_type
-                                    sender.facets.media.byID[art.media_type.id]['artifactIDs'] = new Set()
-                                }
-                                sender.facets.media.byID[art.media_type.id].artifactIDs.add(art.id)
-                                art.facets.media.add(art.media_type.id)
-                                delete art.media_type
-                            }
+                                if (sender.element !== null) sender.element.trigger('dataGathered')
+                                if (sender.data_gathered_callback !== null) sender.data_gathered_callback()
 
-                            if (art.themes) {
-                                art.themes.forEach(theme => {
-                                    if (!(theme.id in sender.facets.themes.byID)) {
-                                        sender.facets.themes.byID[theme.id] = theme
-                                        sender.facets.themes.byID[theme.id]['artifactIDs'] = new Set()
-                                    }
-                                    sender.facets.themes.byID[theme.id].artifactIDs.add(art.id)
-                                    art.facets.themes.add(theme.id)
-                                })
-                                delete art.themes
-                            }
-                        })
-
-                        let dataTypesToSort = ['agents', 'collections', 'media', 'themes']
-                        dataTypesToSort.forEach(cachedDataType => {
-                            sender.facets[cachedDataType].sortedIDs = new Set(sender.tap.sortObjectByKey(
-                                sender.facets[cachedDataType].byID,
-                                'label'
-                            ))
-                        })
-
-                        if (sender.element !== null) sender.element.trigger('dataGathered')
-                        if (sender.data_gathered_callback !== null) sender.data_gathered_callback()
+                            }) // end of artwork fetching
                     }) // end of artifact fetching
             }) // end of exhibit fetching
     }
@@ -441,5 +506,13 @@ export class EphemeraMenu {
         } else {
             filter_div.removeClass('mt-4')
         }
+    }
+
+    getFacet(facet, facetInfo) {
+        if (!(facetInfo.id in this.facets[facet].byID)) {
+            this.facets[facet].byID[facetInfo.id] = facetInfo
+            this.facets[facet].byID[facetInfo.id]['artifactIDs'] = new Set()
+        }
+        return this.facets[facet].byID[facetInfo.id]
     }
 }
