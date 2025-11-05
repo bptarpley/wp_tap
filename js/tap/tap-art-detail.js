@@ -4,6 +4,7 @@ export class ArtDetail {
         this.element = element
         this.artwork_id = null
         this.dragon = null
+        this.showLinks = this.tap.get_params.get('filters') !== 'off'
 
         this.element.html(`
             <div class="row flex-grow-1${window.innerWidth <= 767 ? ' flex-column-reverse' : ''}" style="padding: 20px;">
@@ -34,7 +35,7 @@ export class ArtDetail {
                             meta.exhibits = []
                             if (exhibitions.records) {
                                 exhibitions.records.forEach(exhibition => {
-                                    meta.exhibits.push(Object.assign({}, exhibition.exhibit))
+                                    meta.exhibits.push(Object.assign({}, exhibition.event))
                                 })
                             }
 
@@ -48,7 +49,7 @@ export class ArtDetail {
                                         prizes.records.forEach(prize => {
                                             meta.prizes.push({
                                                 name: prize.name,
-                                                exhibit: prize.exhibit.label
+                                                exhibit: prize.exhibit ? prize.exhibit.label : ''
                                             })
                                         })
                                     }
@@ -56,7 +57,7 @@ export class ArtDetail {
                                     sender.metadata_div.append(`
                                       <div class="tap-artgrid-metadata p-0 m-0">
                                         <h1 class="pt-0">${meta.title}</h1>
-                                        ${sender.tap.render_metadata(meta, 'full')}
+                                        ${sender.tap.render_metadata(meta, 'full', sender.showLinks)}
                                       </div>
                                     `)
 
